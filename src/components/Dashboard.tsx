@@ -292,6 +292,11 @@ export default function Dashboard({ selectedStore, selectedYear, selectedMonth, 
     );
   }
 
+  const pieFormatter = (value: number, name: string, props: { payload: { count: number } }) => [
+    `${formatCurrency(value)} (${props.payload.count}人)`,
+    name,
+  ];
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header with Month Selector */}
@@ -457,10 +462,7 @@ export default function Dashboard({ selectedStore, selectedYear, selectedMonth, 
                 contentStyle={{ backgroundColor: "#1e1e2e", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "#fff" }}
                 labelStyle={{ color: "#fff" }}
                 itemStyle={{ color: "#fff" }}
-                formatter={(value: number, name: string, props: { payload: { count: number } }) => [
-                  `${formatCurrency(value)} (${props.payload.count}人)`,
-                  name
-                ]}
+                formatter={pieFormatter}
               />
             </PieChart>
           </ResponsiveContainer>
