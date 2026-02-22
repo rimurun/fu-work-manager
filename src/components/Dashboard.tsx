@@ -292,10 +292,11 @@ export default function Dashboard({ selectedStore, selectedYear, selectedMonth, 
     );
   }
 
-  const pieFormatter = (value: number, name: string, props: { payload: { count: number } }) => [
-    `${formatCurrency(value)} (${props.payload.count}人)`,
-    name,
-  ];
+  const pieFormatter = (value: number, name: string, item: any) => {
+    const count = item?.payload?.count;
+    const label = `${formatCurrency(value)}${typeof count === "number" ? ` (${count}人)` : ""}`;
+    return [label, name] as [string, string];
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
