@@ -57,13 +57,18 @@ export function useReportData(store: string, year: number, month: number) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const ac = new AbortController();
     const fetchData = async () => {
       setLoading(true);
       setError(null);
 
+      const t = setTimeout(() => ac.abort(), 10000);
+
       try {
+
         // Fetch current month
-        const res = await fetch(`/api/data?store=${store}&year=${year}&month=${month}`);
+        const res = await fetch(`/api/data?store=${store}&year=${year}&month=${month}`, { signal: ac.signal });
+        if (!res.ok) throw new Error(await res.text());
         const json = await res.json();
 
         if (json.reports && json.reports.length > 0) {
@@ -80,7 +85,8 @@ export function useReportData(store: string, year: number, month: number) {
           prevYear = year - 1;
         }
 
-        const prevRes = await fetch(`/api/data?store=${store}&year=${prevYear}&month=${prevMonth}`);
+        const prevRes = await fetch(`/api/data?store=${store}&year=${prevYear}&month=${prevMonth}`, { signal: ac.signal });
+        if (!prevRes.ok) throw new Error(await prevRes.text());
         const prevJson = await prevRes.json();
 
         if (prevJson.reports && prevJson.reports.length > 0) {
@@ -93,11 +99,13 @@ export function useReportData(store: string, year: number, month: number) {
         setData(null);
         setPrevData(null);
       } finally {
+        clearTimeout(t);
         setLoading(false);
       }
     };
 
     fetchData();
+    return () => ac.abort();
   }, [store, year, month]);
 
   return { data, prevData, loading, error };
