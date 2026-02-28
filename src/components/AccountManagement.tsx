@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Loader2, Save, UserCog } from "lucide-react";
+import { Loader2, Save, UserCog, CheckCircle } from "lucide-react";
 import type { Store } from "@/lib/stores";
 
 interface UserAccount {
@@ -18,6 +18,7 @@ export default function AccountManagement({ stores }: AccountManagementProps) {
   const [users, setUsers] = useState<UserAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
+  const [saved, setSaved] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/users")
@@ -44,15 +45,21 @@ export default function AccountManagement({ stores }: AccountManagementProps) {
 
   const saveUser = async (user: UserAccount) => {
     setSaving(user.username);
+    setSaved(null);
     try {
       const res = await fetch(`/api/users/${user.username}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ storeIds: user.storeIds }),
       });
-      if (!res.ok) throw new Error();
-    } catch {
-      alert("保存に失敗しました");
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message || "保存に失敗しました");
+      }
+      setSaved(user.username);
+      setTimeout(() => setSaved(null), 3000);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "保存に失敗しました");
     } finally {
       setSaving(null);
     }
@@ -98,18 +105,26 @@ export default function AccountManagement({ stores }: AccountManagementProps) {
                 </div>
               </div>
               {user.role !== "admin" && (
-                <button
-                  onClick={() => saveUser(user)}
-                  disabled={saving === user.username}
-                  className="flex items-center gap-2 px-4 py-2 bg-accent-purple/20 text-accent-purple rounded-lg hover:bg-accent-purple/30 transition-colors disabled:opacity-50"
-                >
-                  {saving === user.username ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Save className="w-4 h-4" />
+                <div className="flex items-center gap-3">
+                  {saved === user.username && (
+                    <span className="flex items-center gap-1 text-green-400 text-sm">
+                      <CheckCircle className="w-4 h-4" />
+                      保存しました
+                    </span>
                   )}
-                  保存
-                </button>
+                  <button
+                    onClick={() => saveUser(user)}
+                    disabled={saving === user.username}
+                    className="flex items-center gap-2 px-4 py-2 bg-accent-purple/20 text-accent-purple rounded-lg hover:bg-accent-purple/30 transition-colors disabled:opacity-50"
+                  >
+                    {saving === user.username ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Save className="w-4 h-4" />
+                    )}
+                    保存
+                  </button>
+                </div>
               )}
             </div>
 

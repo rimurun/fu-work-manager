@@ -38,6 +38,20 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.role = (user as any).role;
         token.storeIds = (user as any).storeIds;
+        token.username = (user as any).name;
+      }
+      // Refresh storeIds from DB so admin changes take effect immediately
+      if (token.username && token.role !== "admin") {
+        try {
+          await connectToDatabase();
+          const dbUser = await User.findOne(
+            { username: token.username },
+            { storeIds: 1 },
+          ).lean();
+          if (dbUser) {
+            token.storeIds = (dbUser as any).storeIds;
+          }
+        } catch {}
       }
       return token;
     },
