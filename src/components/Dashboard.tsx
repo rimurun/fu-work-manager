@@ -190,8 +190,17 @@ export default function Dashboard({
     "延長60分",
     "延長60分+",
   ]);
+  // Normalize course names across different store naming conventions
+  const normalizeCourse = (name: string) =>
+    name
+      .replace(/^基本コース/, "")
+      .replace(/コース$/, "")
+      .replace(/＋/g, "+")
+      .replace(/[０-９]/g, (c) =>
+        String.fromCharCode(c.charCodeAt(0) - 0xff10 + 0x30),
+      );
   const serviceData = (data?.serviceData || sampleServiceData)
-    .filter((s) => ALLOWED_COURSES.has(s.name.replace(/＋/g, "+")))
+    .filter((s) => ALLOWED_COURSES.has(normalizeCourse(s.name)))
     .sort((a, b) => b.sales - a.sales);
   const hourlyDataRaw = data?.hourlyData || [];
 
