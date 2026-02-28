@@ -62,6 +62,7 @@ export default function Home() {
             selectedMonth={selectedMonth}
             setSelectedYear={setSelectedYear}
             setSelectedMonth={setSelectedMonth}
+            userRole={userRole}
           />
         );
       case "upload":
@@ -84,6 +85,7 @@ export default function Home() {
             selectedMonth={selectedMonth}
             setSelectedYear={setSelectedYear}
             setSelectedMonth={setSelectedMonth}
+            userRole={userRole}
           />
         );
     }

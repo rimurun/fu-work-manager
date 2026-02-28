@@ -13,7 +13,9 @@ import {
   HelpCircle,
   Loader2,
   Upload,
+  Trash2,
 } from "lucide-react";
+import { useState } from "react";
 import { useReportData } from "@/hooks/useReportData";
 import {
   LineChart,
@@ -41,6 +43,7 @@ interface DashboardProps {
   selectedMonth: number;
   setSelectedYear: (year: number) => void;
   setSelectedMonth: (month: number) => void;
+  userRole?: "admin" | "store";
 }
 
 // Sample data
@@ -127,13 +130,37 @@ export default function Dashboard({
   selectedMonth,
   setSelectedYear,
   setSelectedMonth,
+  userRole,
 }: DashboardProps) {
   const storeName = STORES.find((s) => s.id === selectedStore)?.name || "";
-  const { data, prevData, loading, error } = useReportData(
+  const { data, prevData, loading, error, refetch } = useReportData(
     selectedStore,
     selectedYear,
     selectedMonth,
   );
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteMonth = async () => {
+    if (
+      !confirm(
+        `${selectedYear}年${selectedMonth}月のデータを削除しますか？この操作は取り消せません。`,
+      )
+    )
+      return;
+    setDeleting(true);
+    try {
+      const res = await fetch(
+        `/api/data?store=${selectedStore}&year=${selectedYear}&month=${selectedMonth}`,
+        { method: "DELETE" },
+      );
+      if (!res.ok) throw new Error(await res.text());
+      refetch();
+    } catch (err) {
+      alert("削除に失敗しました: " + String(err));
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   // Use real data or fallback to sample data
   const salesData = data?.salesData || sampleSalesData;
@@ -444,7 +471,19 @@ export default function Dashboard({
       {/* Header with Month Selector */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">{storeName} ダッシュボード</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold">{storeName} ダッシュボード</h1>
+            {data && userRole === "admin" && (
+              <button
+                onClick={handleDeleteMonth}
+                disabled={deleting}
+                className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
+                title={`${selectedYear}年${selectedMonth}月のデータを削除`}
+              >
+                <Trash2 className="w-5 h-5" />
+              </button>
+            )}
+          </div>
           <p className="text-gray-400 mt-1">
             {selectedYear}年{selectedMonth}月の統計データ
           </p>
@@ -581,22 +620,10 @@ export default function Dashboard({
                     const newC = seg.find((s) => s.segment.includes("新規"));
                     const memC = seg.find((s) => s.segment.includes("会員"));
                     if (newC && memC)
-                      return `新規 ${newC.percentage.toFixed(0)}% / 会員 ${memC.percentage.toFixed(0)}%`;
+                      return `新規${newC.percentage.toFixed(0)}% 会員${memC.percentage.toFixed(0)}%`;
                     return "-";
                   })()
                 : "-"
-            }
-            subValue={
-              data?.customerSegment?.length
-                ? (() => {
-                    const seg = data.customerSegment;
-                    const newC = seg.find((s) => s.segment.includes("新規"));
-                    const memC = seg.find((s) => s.segment.includes("会員"));
-                    if (newC && memC)
-                      return `新規 ${newC.count}人 / 会員 ${memC.count}人`;
-                    return undefined;
-                  })()
-                : undefined
             }
             icon={Users}
             color="#ec4899"

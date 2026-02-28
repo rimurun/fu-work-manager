@@ -55,6 +55,9 @@ export function useReportData(store: string, year: number, month: number) {
   const [prevData, setPrevData] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [trigger, setTrigger] = useState(0);
+
+  const refetch = () => setTrigger((t) => t + 1);
 
   useEffect(() => {
     const ac = new AbortController();
@@ -111,7 +114,7 @@ export function useReportData(store: string, year: number, month: number) {
 
     fetchData();
     return () => ac.abort();
-  }, [store, year, month]);
+  }, [store, year, month, trigger]);
 
-  return { data, prevData, loading, error };
+  return { data, prevData, loading, error, refetch };
 }
