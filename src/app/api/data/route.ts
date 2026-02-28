@@ -44,6 +44,10 @@ export async function GET(request: NextRequest) {
       .sort({ year: -1, month: -1 })
       .lean();
 
+    console.log(
+      `[DATA] query=${JSON.stringify(query)} found=${reports.length} salesData=${reports[0]?.salesData?.length ?? "N/A"}`,
+    );
+
     return NextResponse.json({ reports });
   } catch (error) {
     console.error("Data fetch error:", error);

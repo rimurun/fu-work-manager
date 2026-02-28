@@ -67,6 +67,10 @@ export async function POST(request: NextRequest) {
       { upsert: true, new: true },
     );
 
+    console.log(
+      `[UPLOAD] store=${store} year=${year} month=${month} sales=${parsedData.salesData.length} cast=${parsedData.castData.length} service=${parsedData.serviceData.length} hourly=${parsedData.hourlyData.length} media=${parsedData.mediaData.length} segment=${parsedData.customerSegment.length}`,
+    );
+
     return NextResponse.json({
       message: "アップロード成功",
       data: {
