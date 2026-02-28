@@ -7,17 +7,35 @@ import type { ParseConfig as ParseConfigType } from "@/lib/parseExcel";
 // Shimei column patterns per store type
 const SHIMEI_OMIYA = {
   startRow: 1,
-  columns: { name: 0, staffRecommend: 1, photoMember: 2, honShimei: 3, photoNew: 5 },
+  columns: {
+    name: 0,
+    staffRecommend: 1,
+    photoMember: 2,
+    honShimei: 3,
+    photoNew: 5,
+  },
 };
 
 const SHIMEI_NISHIKAWA_PUYO = {
   startRow: 1,
-  columns: { name: 0, photoNew: 2, staffRecommend: 99, photoMember: 4, honShimei: 5 },
+  columns: {
+    name: 0,
+    photoNew: 2,
+    staffRecommend: 99,
+    photoMember: 4,
+    honShimei: 5,
+  },
 };
 
 const SHIMEI_NAGOYA = {
   startRow: 1,
-  columns: { name: 0, photoNew: 2, staffRecommend: 99, photoMember: 5, honShimei: 6 },
+  columns: {
+    name: 0,
+    photoNew: 2,
+    staffRecommend: 99,
+    photoMember: 5,
+    honShimei: 6,
+  },
 };
 
 function getConfigForStore(storeName: string): ParseConfigType | null {

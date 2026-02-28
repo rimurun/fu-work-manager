@@ -13,7 +13,10 @@ export async function GET(
   try {
     const session = await getServerSession(authOptions);
     if ((session?.user as any)?.role !== "admin") {
-      return NextResponse.json({ message: "権限がありません" }, { status: 403 });
+      return NextResponse.json(
+        { message: "権限がありません" },
+        { status: 403 },
+      );
     }
 
     await connectToDatabase();
@@ -40,7 +43,10 @@ export async function PUT(
   try {
     const session = await getServerSession(authOptions);
     if ((session?.user as any)?.role !== "admin") {
-      return NextResponse.json({ message: "権限がありません" }, { status: 403 });
+      return NextResponse.json(
+        { message: "権限がありません" },
+        { status: 403 },
+      );
     }
 
     await connectToDatabase();
