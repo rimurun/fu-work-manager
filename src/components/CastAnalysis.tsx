@@ -988,6 +988,18 @@ export default function CastAnalysis({
                   stroke="#888"
                   width={70}
                   fontSize={12}
+                  tick={({ x, y, payload }) => (
+                    <text
+                      x={x - 65}
+                      y={y}
+                      dy={4}
+                      fill="#888"
+                      fontSize={12}
+                      textAnchor="start"
+                    >
+                      {payload.value}
+                    </text>
+                  )}
                 />
                 <Tooltip
                   contentStyle={{
