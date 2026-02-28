@@ -45,15 +45,17 @@ export async function POST(request: NextRequest) {
     // Connect to MongoDB
     await connectToDatabase();
 
-    // Upsert report
+    // Upsert report (use $set explicitly to avoid replacing other documents)
     await MonthlyReport.findOneAndUpdate(
       { store, year, month },
       {
-        store,
-        year,
-        month,
-        uploadedAt: new Date(),
-        ...parsedData,
+        $set: {
+          store,
+          year,
+          month,
+          uploadedAt: new Date(),
+          ...parsedData,
+        },
       },
       { upsert: true, new: true },
     );

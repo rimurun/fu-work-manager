@@ -6,10 +6,11 @@ import Sidebar from "@/components/Sidebar";
 import Dashboard from "@/components/Dashboard";
 import UploadPage from "@/components/UploadPage";
 import CastAnalysis from "@/components/CastAnalysis";
+import AccountManagement from "@/components/AccountManagement";
 import { useStores } from "@/hooks/useStores";
 import { Loader2 } from "lucide-react";
 
-type Page = "dashboard" | "upload" | "cast" | "trends";
+type Page = "dashboard" | "upload" | "cast" | "trends" | "accounts";
 
 export default function Home() {
   const { data: session, status } = useSession();
@@ -77,6 +78,8 @@ export default function Home() {
             setSelectedMonth={setSelectedMonth}
           />
         );
+      case "accounts":
+        return <AccountManagement stores={storeManager.stores} />;
       default:
         return (
           <Dashboard

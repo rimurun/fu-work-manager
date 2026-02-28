@@ -13,11 +13,12 @@ import {
   X,
   Settings,
   LogOut,
+  UserCog,
 } from "lucide-react";
 import { useState } from "react";
 import type { Store } from "@/lib/stores";
 
-type Page = "dashboard" | "upload" | "cast" | "trends";
+type Page = "dashboard" | "upload" | "cast" | "trends" | "accounts";
 
 interface SidebarProps {
   currentPage: Page;
@@ -60,6 +61,9 @@ export default function Sidebar({
     { id: "dashboard" as Page, label: "ダッシュボード", icon: BarChart3 },
     { id: "cast" as Page, label: "キャスト分析", icon: Users },
     { id: "upload" as Page, label: "データアップロード", icon: Upload },
+    ...(isAdmin
+      ? [{ id: "accounts" as Page, label: "アカウント管理", icon: UserCog }]
+      : []),
   ];
 
   const currentStoreName =

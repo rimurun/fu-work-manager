@@ -611,23 +611,40 @@ export default function Dashboard({
             change={prevData ? customerChange : undefined}
             color="#06b6d4"
           />
-          <StatCard
-            title="新規・会員比率"
-            value={
-              data?.customerSegment?.length
-                ? (() => {
-                    const seg = data.customerSegment;
-                    const newC = seg.find((s) => s.segment.includes("新規"));
-                    const memC = seg.find((s) => s.segment.includes("会員"));
-                    if (newC && memC)
-                      return `新規${newC.percentage.toFixed(0)}% 会員${memC.percentage.toFixed(0)}%`;
-                    return "-";
-                  })()
-                : "-"
-            }
-            icon={Users}
-            color="#ec4899"
-          />
+          {(() => {
+            const seg = data?.customerSegment || [];
+            const newC = seg.find((s) => s.segment.includes("新規"));
+            const memC = seg.find((s) => s.segment.includes("会員"));
+            return (
+              <div className="glass rounded-xl p-6 card-hover">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-gray-400 text-sm">新規・会員比率</p>
+                    <div className="mt-2 space-y-1">
+                      <p className="text-xl font-bold">
+                        新規{" "}
+                        <span className="text-pink-400">
+                          {newC ? `${newC.percentage.toFixed(0)}%` : "-"}
+                        </span>
+                      </p>
+                      <p className="text-xl font-bold">
+                        会員{" "}
+                        <span className="text-cyan-400">
+                          {memC ? `${memC.percentage.toFixed(0)}%` : "-"}
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                  <div
+                    className="p-3 rounded-lg"
+                    style={{ backgroundColor: "#ec489920" }}
+                  >
+                    <Users className="w-6 h-6" style={{ color: "#ec4899" }} />
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
         </div>
       )}
 
