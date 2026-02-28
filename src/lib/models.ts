@@ -129,3 +129,21 @@ const StoreSchema = new Schema<IStore>({
 
 export const Store =
   mongoose.models.Store || mongoose.model<IStore>("Store", StoreSchema);
+
+// User Schema
+export interface IUser extends Document {
+  username: string;
+  password: string;
+  role: "admin" | "store";
+  storeIds: string[];
+}
+
+const UserSchema = new Schema<IUser>({
+  username: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  role: { type: String, enum: ["admin", "store"], required: true },
+  storeIds: [{ type: String }],
+});
+
+export const User =
+  mongoose.models.User || mongoose.model<IUser>("User", UserSchema);

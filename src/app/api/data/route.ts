@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     if (!store) {
       return NextResponse.json(
         { message: "店舗IDが必要です" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     console.error("Data fetch error:", error);
     return NextResponse.json(
       { message: "データ取得に失敗しました", error: String(error) },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

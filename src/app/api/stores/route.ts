@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/mongodb";
 import { Store } from "@/lib/models";
 import { DEFAULT_STORES } from "@/lib/stores";
@@ -29,9 +31,17 @@ export async function GET() {
   }
 }
 
-// POST /api/stores - Create a new store
+// POST /api/stores - Create a new store (admin only)
 export async function POST(request: Request) {
   try {
+    const session = await getServerSession(authOptions);
+    if ((session?.user as any)?.role !== "admin") {
+      return NextResponse.json(
+        { message: "権限がありません" },
+        { status: 403 },
+      );
+    }
+
     await connectToDatabase();
     const { id, name } = await request.json();
 

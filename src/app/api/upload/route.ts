@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/mongodb";
 import { MonthlyReport } from "@/lib/models";
 import { parseExcelFile } from "@/lib/parseExcel";
@@ -7,6 +9,12 @@ export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    const userRole = (session?.user as any)?.role;
+    const userStoreIds = (session?.user as any)?.storeIds as
+      | string[]
+      | undefined;
+
     const formData = await request.formData();
     const file = formData.get("file") as File;
     const store = formData.get("store") as string;
@@ -16,7 +24,15 @@ export async function POST(request: NextRequest) {
     if (!file || !store || !year || !month) {
       return NextResponse.json(
         { message: "必須パラメータが不足しています" },
-        { status: 400 }
+        { status: 400 },
+      );
+    }
+
+    // Store role can only upload to their own store
+    if (userRole === "store" && !userStoreIds?.includes(store)) {
+      return NextResponse.json(
+        { message: "権限がありません" },
+        { status: 403 },
       );
     }
 
@@ -39,7 +55,7 @@ export async function POST(request: NextRequest) {
         uploadedAt: new Date(),
         ...parsedData,
       },
-      { upsert: true, new: true }
+      { upsert: true, new: true },
     );
 
     return NextResponse.json({
@@ -56,7 +72,7 @@ export async function POST(request: NextRequest) {
     console.error("Upload error:", error);
     return NextResponse.json(
       { message: "アップロードに失敗しました", error: String(error) },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

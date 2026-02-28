@@ -1,13 +1,23 @@
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/mongodb";
 import { Store } from "@/lib/models";
 
-// PUT /api/stores/[id] - Update store name
+// PUT /api/stores/[id] - Update store name (admin only)
 export async function PUT(
   request: Request,
   { params }: { params: { id: string } },
 ) {
   try {
+    const session = await getServerSession(authOptions);
+    if ((session?.user as any)?.role !== "admin") {
+      return NextResponse.json(
+        { message: "権限がありません" },
+        { status: 403 },
+      );
+    }
+
     await connectToDatabase();
     const { name } = await request.json();
 
@@ -41,12 +51,20 @@ export async function PUT(
   }
 }
 
-// DELETE /api/stores/[id] - Delete a store
+// DELETE /api/stores/[id] - Delete a store (admin only)
 export async function DELETE(
   _request: Request,
   { params }: { params: { id: string } },
 ) {
   try {
+    const session = await getServerSession(authOptions);
+    if ((session?.user as any)?.role !== "admin") {
+      return NextResponse.json(
+        { message: "権限がありません" },
+        { status: 403 },
+      );
+    }
+
     await connectToDatabase();
     const store = await Store.findOneAndDelete({ storeId: params.id });
 

@@ -65,9 +65,11 @@ export function useReportData(store: string, year: number, month: number) {
       const t = setTimeout(() => ac.abort(), 10000);
 
       try {
-
         // Fetch current month
-        const res = await fetch(`/api/data?store=${store}&year=${year}&month=${month}`, { signal: ac.signal });
+        const res = await fetch(
+          `/api/data?store=${store}&year=${year}&month=${month}`,
+          { signal: ac.signal },
+        );
         if (!res.ok) throw new Error(await res.text());
         const json = await res.json();
 
@@ -85,7 +87,10 @@ export function useReportData(store: string, year: number, month: number) {
           prevYear = year - 1;
         }
 
-        const prevRes = await fetch(`/api/data?store=${store}&year=${prevYear}&month=${prevMonth}`, { signal: ac.signal });
+        const prevRes = await fetch(
+          `/api/data?store=${store}&year=${prevYear}&month=${prevMonth}`,
+          { signal: ac.signal },
+        );
         if (!prevRes.ok) throw new Error(await prevRes.text());
         const prevJson = await prevRes.json();
 

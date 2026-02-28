@@ -32,86 +32,96 @@ export default function UploadPage({ selectedStore }: UploadPageProps) {
     }
   }, []);
 
-  const handleFiles = useCallback(async (files: FileList) => {
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
+  const handleFiles = useCallback(
+    async (files: FileList) => {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
 
-      // Check if it's an Excel file
-      if (!file.name.match(/\.(xlsx|xls)$/i)) {
+        // Check if it's an Excel file
+        if (!file.name.match(/\.(xlsx|xls)$/i)) {
+          setUploadedFiles((prev) => [
+            ...prev,
+            {
+              name: file.name,
+              status: "error",
+              message: "Excelファイル (.xlsx, .xls) のみ対応しています",
+            },
+          ]);
+          continue;
+        }
+
+        // Add file with uploading status
         setUploadedFiles((prev) => [
           ...prev,
-          {
-            name: file.name,
-            status: "error",
-            message: "Excelファイル (.xlsx, .xls) のみ対応しています",
-          },
+          { name: file.name, status: "uploading" },
         ]);
-        continue;
-      }
 
-      // Add file with uploading status
-      setUploadedFiles((prev) => [
-        ...prev,
-        { name: file.name, status: "uploading" },
-      ]);
+        try {
+          // Create form data
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("store", selectedStore);
+          formData.append("year", selectedYear.toString());
+          formData.append("month", selectedMonth.toString());
 
-      try {
-        // Create form data
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("store", selectedStore);
-        formData.append("year", selectedYear.toString());
-        formData.append("month", selectedMonth.toString());
+          // Upload to API
+          const response = await fetch("/api/upload", {
+            method: "POST",
+            body: formData,
+          });
 
-        // Upload to API
-        const response = await fetch("/api/upload", {
-          method: "POST",
-          body: formData,
-        });
-
-        if (response.ok) {
-          setUploadedFiles((prev) =>
-            prev.map((f) =>
-              f.name === file.name
-                ? { ...f, status: "success", message: "アップロード完了" }
-                : f,
-            ),
-          );
-        } else {
-          const error = await response.json();
+          if (response.ok) {
+            setUploadedFiles((prev) =>
+              prev.map((f) =>
+                f.name === file.name
+                  ? { ...f, status: "success", message: "アップロード完了" }
+                  : f,
+              ),
+            );
+          } else {
+            const error = await response.json();
+            setUploadedFiles((prev) =>
+              prev.map((f) =>
+                f.name === file.name
+                  ? {
+                      ...f,
+                      status: "error",
+                      message: error.message || "エラーが発生しました",
+                    }
+                  : f,
+              ),
+            );
+          }
+        } catch (error) {
           setUploadedFiles((prev) =>
             prev.map((f) =>
               f.name === file.name
                 ? {
                     ...f,
                     status: "error",
-                    message: error.message || "エラーが発生しました",
+                    message: "アップロードに失敗しました",
                   }
                 : f,
             ),
           );
         }
-      } catch (error) {
-        setUploadedFiles((prev) =>
-          prev.map((f) =>
-            f.name === file.name
-              ? { ...f, status: "error", message: "アップロードに失敗しました" }
-              : f,
-          ),
-        );
       }
-    }
-  }, [selectedStore, selectedYear, selectedMonth]);
+    },
+    [selectedStore, selectedYear, selectedMonth],
+  );
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setDragActive(false);
 
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFiles(e.dataTransfer.files);
-    }
-  }, [handleFiles]);
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        handleFiles(e.dataTransfer.files);
+      }
+    },
+    [handleFiles],
+  );
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {

@@ -60,5 +60,12 @@ export function useStores() {
     await fetchStores();
   };
 
-  return { stores, loading, addStore, updateStore, deleteStore, refetch: fetchStores };
+  return {
+    stores,
+    loading,
+    addStore,
+    updateStore,
+    deleteStore,
+    refetch: fetchStores,
+  };
 }
