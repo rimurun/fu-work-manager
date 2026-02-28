@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { STORES as DEFAULT_STORES, type Store } from "@/lib/stores";
+import { type Store } from "@/lib/stores";
 
 export function useStores() {
-  const [stores, setStores] = useState<Store[]>(DEFAULT_STORES);
+  const [stores, setStores] = useState<Store[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchStores = useCallback(async () => {

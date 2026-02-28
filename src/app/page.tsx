@@ -32,14 +32,19 @@ export default function Home() {
       ? storeManager.stores
       : storeManager.stores.filter((s) => userStoreIds?.includes(s.id));
 
-  // Set initial store when no store is selected yet
+  // Keep selectedStore in sync with available stores
   useEffect(() => {
-    if (!selectedStore && visibleStores.length > 0) {
-      setSelectedStore(visibleStores[0].id);
+    if (visibleStores.length > 0) {
+      if (
+        !selectedStore ||
+        !visibleStores.find((s) => s.id === selectedStore)
+      ) {
+        setSelectedStore(visibleStores[0].id);
+      }
     }
   }, [selectedStore, visibleStores]);
 
-  if (status === "loading") {
+  if (status === "loading" || storeManager.loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-dark-400">
         <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
