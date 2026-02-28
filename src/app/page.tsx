@@ -26,24 +26,35 @@ export default function Home() {
     | undefined;
   const userStoreIds = (session?.user as any)?.storeIds as string[] | undefined;
 
-  // Set initial store based on user role
-  useEffect(() => {
-    if (userRole === "store" && userStoreIds?.length) {
-      setSelectedStore(userStoreIds[0]);
-    } else if (
-      userRole === "admin" &&
-      storeManager.stores.length > 0 &&
-      !selectedStore
-    ) {
-      setSelectedStore(storeManager.stores[0].id);
-    }
-  }, [userRole, userStoreIds, storeManager.stores, selectedStore]);
-
   // Filter stores by user access
   const visibleStores =
     userRole === "admin"
       ? storeManager.stores
       : storeManager.stores.filter((s) => userStoreIds?.includes(s.id));
+
+  // Set initial store based on user role
+  useEffect(() => {
+    if (userRole === "store" && userStoreIds?.length) {
+      // For store users, always sync to first assigned store
+      const firstStore = userStoreIds[0];
+      if (selectedStore !== firstStore) {
+        setSelectedStore(firstStore);
+      }
+    } else if (
+      userRole === "admin" &&
+      !selectedStore &&
+      storeManager.stores.length > 0
+    ) {
+      setSelectedStore(storeManager.stores[0].id);
+    }
+  }, [userRole, userStoreIds, storeManager.stores, selectedStore]);
+
+  // Fallback: if selectedStore is empty but visibleStores exist, select the first
+  useEffect(() => {
+    if (!selectedStore && visibleStores.length > 0) {
+      setSelectedStore(visibleStores[0].id);
+    }
+  }, [selectedStore, visibleStores]);
 
   if (status === "loading") {
     return (
