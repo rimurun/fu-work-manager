@@ -68,10 +68,11 @@ export function useReportData(store: string, year: number, month: number) {
       const t = setTimeout(() => ac.abort(), 10000);
 
       try {
-        // Fetch current month
+        // Fetch current month (cache-bust to avoid stale data after delete/re-upload)
+        const cacheBust = `&_t=${Date.now()}`;
         const res = await fetch(
-          `/api/data?store=${store}&year=${year}&month=${month}`,
-          { signal: ac.signal },
+          `/api/data?store=${store}&year=${year}&month=${month}${cacheBust}`,
+          { signal: ac.signal, cache: "no-store" },
         );
         if (!res.ok) throw new Error(await res.text());
         const json = await res.json();
@@ -91,8 +92,8 @@ export function useReportData(store: string, year: number, month: number) {
         }
 
         const prevRes = await fetch(
-          `/api/data?store=${store}&year=${prevYear}&month=${prevMonth}`,
-          { signal: ac.signal },
+          `/api/data?store=${store}&year=${prevYear}&month=${prevMonth}${cacheBust}`,
+          { signal: ac.signal, cache: "no-store" },
         );
         if (!prevRes.ok) throw new Error(await prevRes.text());
         const prevJson = await prevRes.json();

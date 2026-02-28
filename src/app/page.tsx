@@ -66,7 +66,15 @@ export default function Home() {
           />
         );
       case "upload":
-        return <UploadPage selectedStore={selectedStore} />;
+        return (
+          <UploadPage
+            selectedStore={selectedStore}
+            selectedYear={selectedYear}
+            selectedMonth={selectedMonth}
+            setSelectedYear={setSelectedYear}
+            setSelectedMonth={setSelectedMonth}
+          />
+        );
       case "cast":
         return (
           <CastAnalysis

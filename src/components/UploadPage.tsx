@@ -6,6 +6,10 @@ import { STORES } from "@/lib/stores";
 
 interface UploadPageProps {
   selectedStore: string;
+  selectedYear: number;
+  selectedMonth: number;
+  setSelectedYear: (year: number) => void;
+  setSelectedMonth: (month: number) => void;
 }
 
 interface UploadedFile {
@@ -14,10 +18,14 @@ interface UploadedFile {
   message?: string;
 }
 
-export default function UploadPage({ selectedStore }: UploadPageProps) {
+export default function UploadPage({
+  selectedStore,
+  selectedYear,
+  selectedMonth,
+  setSelectedYear,
+  setSelectedMonth,
+}: UploadPageProps) {
   const [dragActive, setDragActive] = useState(false);
-  const [selectedYear, setSelectedYear] = useState(2026);
-  const [selectedMonth, setSelectedMonth] = useState(1);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
 
   const storeName = STORES.find((s) => s.id === selectedStore)?.name || "";
