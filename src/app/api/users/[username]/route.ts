@@ -28,6 +28,10 @@ export async function PUT(
       );
     }
 
+    console.log(
+      `[USER UPDATE] username=${params.username}, storeIds=${JSON.stringify(storeIds)}`,
+    );
+
     const user = await User.findOneAndUpdate(
       { username: params.username },
       { $set: { storeIds } },
@@ -40,6 +44,14 @@ export async function PUT(
         { status: 404 },
       );
     }
+
+    // Verify the update
+    const verify = (await User.findOne({ username: params.username })
+      .select("storeIds")
+      .lean()) as any;
+    console.log(
+      `[USER UPDATE VERIFY] ${params.username} storeIds=${JSON.stringify(verify?.storeIds)}`,
+    );
 
     return NextResponse.json({
       username: user.username,

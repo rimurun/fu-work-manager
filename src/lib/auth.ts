@@ -22,6 +22,10 @@ export const authOptions: NextAuthOptions = {
         const isValid = await compare(credentials.password, user.password);
         if (!isValid) return null;
 
+        console.log(
+          `[AUTH LOGIN] ${user.username} storeIds=${JSON.stringify(user.storeIds)}`,
+        );
+
         return {
           id: user._id.toString(),
           name: user.username,
