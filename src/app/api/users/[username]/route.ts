@@ -59,6 +59,10 @@ export async function PUT(
       username: (updated as any).username,
       role: (updated as any).role,
       storeIds: (updated as any).storeIds,
+      _debug: {
+        matched: result.matchedCount,
+        modified: result.modifiedCount,
+      },
     });
   } catch (error) {
     console.error("User update error:", error);

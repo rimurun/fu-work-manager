@@ -21,11 +21,7 @@ export default function AccountManagement({ stores }: AccountManagementProps) {
   const [saved, setSaved] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/users")
-      .then((r) => r.json())
-      .then((d) => setUsers(d.users || []))
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    fetchUsers().finally(() => setLoading(false));
   }, []);
 
   const toggleStore = (username: string, storeId: string) => {
@@ -43,6 +39,16 @@ export default function AccountManagement({ stores }: AccountManagementProps) {
     );
   };
 
+  const fetchUsers = async () => {
+    try {
+      const res = await fetch("/api/users");
+      if (res.ok) {
+        const d = await res.json();
+        setUsers(d.users || []);
+      }
+    } catch {}
+  };
+
   const saveUser = async (user: UserAccount) => {
     setSaving(user.username);
     setSaved(null);
@@ -56,15 +62,9 @@ export default function AccountManagement({ stores }: AccountManagementProps) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.message || "保存に失敗しました");
       }
-      const updated = await res.json();
-      // Update local state with API response to confirm persistence
-      setUsers((prev) =>
-        prev.map((u) =>
-          u.username === updated.username
-            ? { ...u, storeIds: updated.storeIds }
-            : u,
-        ),
-      );
+      await res.json();
+      // Verify DB persistence by re-fetching from server
+      await fetchUsers();
       setSaved(user.username);
       setTimeout(() => setSaved(null), 3000);
     } catch (err) {
