@@ -208,46 +208,45 @@ const getAttritionRisk = (cast: (typeof sampleCastData)[0]) => {
   const reasons: string[] = [];
 
   // Factor 1: Declining sales (売上低下)
+  // This industry has 10-20% monthly fluctuation as normal
   const salesChange = ((cast.sales - cast.prevSales) / cast.prevSales) * 100;
-  if (salesChange < -20) {
+  if (salesChange < -30) {
     riskScore += 3;
     reasons.push(`売上${salesChange.toFixed(0)}%減`);
-  } else if (salesChange < -10) {
+  } else if (salesChange < -20) {
     riskScore += 2;
     reasons.push(`売上${salesChange.toFixed(0)}%減`);
   }
 
   // Factor 2: Increasing absence rate (欠勤率上昇)
   const absenceIncrease = cast.absenceRate - cast.prevAbsenceRate;
-  if (absenceIncrease >= 20) {
+  if (absenceIncrease >= 25) {
     riskScore += 3;
     reasons.push(`欠勤率+${absenceIncrease.toFixed(0)}pt`);
-  } else if (absenceIncrease >= 10) {
+  } else if (absenceIncrease >= 15) {
     riskScore += 2;
     reasons.push(`欠勤率+${absenceIncrease.toFixed(0)}pt`);
   }
 
   // Factor 3: Very high absence rate (高欠勤率)
-  if (cast.absenceRate >= 55) {
+  if (cast.absenceRate >= 60) {
     riskScore += 3;
     reasons.push(`欠勤率${cast.absenceRate.toFixed(0)}%`);
-  } else if (cast.absenceRate >= 45) {
+  } else if (cast.absenceRate >= 50) {
     riskScore += 2;
     reasons.push(`欠勤率${cast.absenceRate.toFixed(0)}%`);
   }
 
   // Factor 4: Low utilization and declining (稼働率低下)
-  if (cast.utilizationRate < 20) {
+  if (cast.utilizationRate < 15) {
     riskScore += 1;
     reasons.push("低稼働");
   }
 
-  // Factor 5: Trend is down
-  if (cast.trend === "down") {
-    riskScore += 1;
-  }
-
   // Determine risk level
+  // High: multiple strong signals (score 5+)
+  // Medium: clear warning signs (score 4)
+  // Low: minor concern (score 2-3)
   if (riskScore >= 5)
     return {
       level: "high",
@@ -255,14 +254,14 @@ const getAttritionRisk = (cast: (typeof sampleCastData)[0]) => {
       color: "text-red-400 bg-red-400/20",
       reasons,
     };
-  if (riskScore >= 3)
+  if (riskScore >= 4)
     return {
       level: "medium",
       label: "中",
       color: "text-orange-400 bg-orange-400/20",
       reasons,
     };
-  if (riskScore >= 1)
+  if (riskScore >= 2)
     return {
       level: "low",
       label: "低",
@@ -431,7 +430,7 @@ export default function CastAnalysis({
       icon?: string;
     }[] = [];
 
-    // Attrition risk - HIGH priority
+    // Attrition risk - HIGH priority (only show high, not medium)
     const highRiskCasts = castData.filter(
       (c) => getAttritionRisk(c).level === "high",
     );
@@ -444,11 +443,11 @@ export default function CastAnalysis({
       });
     }
 
-    // Medium attrition risk
+    // Medium attrition risk (only show if 3 or fewer to avoid clutter)
     const mediumRiskCasts = castData.filter(
       (c) => getAttritionRisk(c).level === "medium",
     );
-    if (mediumRiskCasts.length > 0) {
+    if (mediumRiskCasts.length > 0 && mediumRiskCasts.length <= 3) {
       alerts.push({
         type: "warning",
         message: "離脱リスク注意",
@@ -457,20 +456,11 @@ export default function CastAnalysis({
       });
     }
 
-    // High absence rate
-    const highAbsence = castData.filter((c) => c.absenceRate >= 45);
-    if (highAbsence.length > 0) {
-      alerts.push({
-        type: "warning",
-        message: "欠勤率45%超",
-        casts: highAbsence.map((c) => c.name),
-      });
-    }
-
-    // Low hon-shimei ratio (photo > hon)
-    const lowHonRatio = castData.filter(
-      (c) => c.photoShimei > c.honShimei && c.honShimei >= 5,
-    );
+    // Low hon-shimei ratio - only for casts with enough data (10+ shimei total)
+    const lowHonRatio = castData.filter((c) => {
+      const total = c.honShimei + c.photoShimei;
+      return total >= 10 && c.photoShimei > c.honShimei * 1.5;
+    });
     if (lowHonRatio.length > 0) {
       alerts.push({
         type: "info",
@@ -492,9 +482,9 @@ export default function CastAnalysis({
       });
     }
 
-    // Low repeat rate but high sales
+    // Low repeat rate but high sales (stricter thresholds)
     const lowRepeat = castData.filter(
-      (c) => c.repeatRate < 20 && c.sales >= 200000,
+      (c) => c.repeatRate < 15 && c.sales >= 300000,
     );
     if (lowRepeat.length > 0) {
       alerts.push({
