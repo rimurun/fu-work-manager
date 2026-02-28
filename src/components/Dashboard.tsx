@@ -187,6 +187,8 @@ export default function Dashboard({
     "事前予約120分+20分",
     "延長30分+",
     "延長30分",
+    "延長60分",
+    "延長60分+",
   ]);
   const serviceData = (data?.serviceData || sampleServiceData)
     .filter((s) => ALLOWED_COURSES.has(s.name.replace(/＋/g, "+")))
