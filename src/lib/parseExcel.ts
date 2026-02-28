@@ -144,6 +144,7 @@ function parseCastSalesSheet(
     if (!row || !row[0]) continue;
 
     const name = String(row[0]).trim();
+    if (name.includes("合計")) continue;
     const sales = Number(row[1]) || 0;
 
     if (!castMap.has(name)) {
@@ -184,6 +185,7 @@ function parseShimeiSheet(
     if (!row || !row[0]) continue;
 
     const name = String(row[0]).trim();
+    if (name.includes("合計")) continue;
 
     if (!castMap.has(name)) {
       castMap.set(name, {
@@ -226,6 +228,7 @@ function parseRepeatRateSheet(
     if (!row || !row[0]) continue;
 
     const name = String(row[0]).trim();
+    if (name.includes("合計")) continue;
 
     if (castMap.has(name)) {
       const cast = castMap.get(name)!;
@@ -253,6 +256,7 @@ function parseUtilizationSheet(
     if (!row || !row[0]) continue;
 
     const name = String(row[0]).trim();
+    if (name.includes("合計")) continue;
 
     if (castMap.has(name)) {
       const cast = castMap.get(name)!;
@@ -278,6 +282,7 @@ function parseAbsenceSheet(
     if (!row || !row[0]) continue;
 
     const name = String(row[0]).trim();
+    if (name.includes("合計")) continue;
 
     if (castMap.has(name)) {
       const cast = castMap.get(name)!;
@@ -303,6 +308,7 @@ function parseLateSheet(
     if (!row || !row[0]) continue;
 
     const name = String(row[0]).trim();
+    if (name.includes("合計")) continue;
 
     if (castMap.has(name)) {
       const cast = castMap.get(name)!;
@@ -328,6 +334,7 @@ function parseExtensionSheet(
     if (!row || !row[0]) continue;
 
     const name = String(row[0]).trim();
+    if (name.includes("合計")) continue;
 
     if (castMap.has(name)) {
       const cast = castMap.get(name)!;

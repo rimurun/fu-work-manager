@@ -32,23 +32,7 @@ export default function UploadPage({ selectedStore }: UploadPageProps) {
     }
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFiles(e.dataTransfer.files);
-    }
-  }, []);
-
-  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      handleFiles(e.target.files);
-    }
-  };
-
-  const handleFiles = async (files: FileList) => {
+  const handleFiles = useCallback(async (files: FileList) => {
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
 
@@ -90,17 +74,21 @@ export default function UploadPage({ selectedStore }: UploadPageProps) {
             prev.map((f) =>
               f.name === file.name
                 ? { ...f, status: "success", message: "アップロード完了" }
-                : f
-            )
+                : f,
+            ),
           );
         } else {
           const error = await response.json();
           setUploadedFiles((prev) =>
             prev.map((f) =>
               f.name === file.name
-                ? { ...f, status: "error", message: error.message || "エラーが発生しました" }
-                : f
-            )
+                ? {
+                    ...f,
+                    status: "error",
+                    message: error.message || "エラーが発生しました",
+                  }
+                : f,
+            ),
           );
         }
       } catch (error) {
@@ -108,10 +96,26 @@ export default function UploadPage({ selectedStore }: UploadPageProps) {
           prev.map((f) =>
             f.name === file.name
               ? { ...f, status: "error", message: "アップロードに失敗しました" }
-              : f
-          )
+              : f,
+          ),
         );
       }
+    }
+  }, [selectedStore, selectedYear, selectedMonth]);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFiles(e.dataTransfer.files);
+    }
+  }, [handleFiles]);
+
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      handleFiles(e.target.files);
     }
   };
 
@@ -211,9 +215,7 @@ export default function UploadPage({ selectedStore }: UploadPageProps) {
           >
             ファイルを選択
           </label>
-          <p className="text-sm text-gray-500 mt-4">
-            対応形式: .xlsx, .xls
-          </p>
+          <p className="text-sm text-gray-500 mt-4">対応形式: .xlsx, .xls</p>
         </div>
       </div>
 
@@ -233,8 +235,8 @@ export default function UploadPage({ selectedStore }: UploadPageProps) {
                       file.status === "success"
                         ? "text-green-500"
                         : file.status === "error"
-                        ? "text-red-500"
-                        : "text-accent-purple"
+                          ? "text-red-500"
+                          : "text-accent-purple"
                     }`}
                   />
                   <div>

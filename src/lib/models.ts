@@ -115,3 +115,17 @@ MonthlyReportSchema.index({ store: 1, year: 1, month: 1 }, { unique: true });
 export const MonthlyReport =
   mongoose.models.MonthlyReport ||
   mongoose.model<IMonthlyReport>("MonthlyReport", MonthlyReportSchema);
+
+// Store Schema
+export interface IStore extends Document {
+  storeId: string;
+  name: string;
+}
+
+const StoreSchema = new Schema<IStore>({
+  storeId: { type: String, required: true, unique: true },
+  name: { type: String, required: true },
+});
+
+export const Store =
+  mongoose.models.Store || mongoose.model<IStore>("Store", StoreSchema);

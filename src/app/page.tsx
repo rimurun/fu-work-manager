@@ -5,6 +5,7 @@ import Sidebar from "@/components/Sidebar";
 import Dashboard from "@/components/Dashboard";
 import UploadPage from "@/components/UploadPage";
 import CastAnalysis from "@/components/CastAnalysis";
+import { useStores } from "@/hooks/useStores";
 
 type Page = "dashboard" | "upload" | "cast" | "trends";
 
@@ -13,17 +14,42 @@ export default function Home() {
   const [selectedStore, setSelectedStore] = useState<string>("omiya");
   const [selectedYear, setSelectedYear] = useState(2026);
   const [selectedMonth, setSelectedMonth] = useState(1);
+  const storeManager = useStores();
 
   const renderPage = () => {
     switch (currentPage) {
       case "dashboard":
-        return <Dashboard selectedStore={selectedStore} selectedYear={selectedYear} selectedMonth={selectedMonth} setSelectedYear={setSelectedYear} setSelectedMonth={setSelectedMonth} />;
+        return (
+          <Dashboard
+            selectedStore={selectedStore}
+            selectedYear={selectedYear}
+            selectedMonth={selectedMonth}
+            setSelectedYear={setSelectedYear}
+            setSelectedMonth={setSelectedMonth}
+          />
+        );
       case "upload":
         return <UploadPage selectedStore={selectedStore} />;
       case "cast":
-        return <CastAnalysis selectedStore={selectedStore} selectedYear={selectedYear} selectedMonth={selectedMonth} setSelectedYear={setSelectedYear} setSelectedMonth={setSelectedMonth} />;
+        return (
+          <CastAnalysis
+            selectedStore={selectedStore}
+            selectedYear={selectedYear}
+            selectedMonth={selectedMonth}
+            setSelectedYear={setSelectedYear}
+            setSelectedMonth={setSelectedMonth}
+          />
+        );
       default:
-        return <Dashboard selectedStore={selectedStore} selectedYear={selectedYear} selectedMonth={selectedMonth} setSelectedYear={setSelectedYear} setSelectedMonth={setSelectedMonth} />;
+        return (
+          <Dashboard
+            selectedStore={selectedStore}
+            selectedYear={selectedYear}
+            selectedMonth={selectedMonth}
+            setSelectedYear={setSelectedYear}
+            setSelectedMonth={setSelectedMonth}
+          />
+        );
     }
   };
 
@@ -34,11 +60,13 @@ export default function Home() {
         setCurrentPage={setCurrentPage}
         selectedStore={selectedStore}
         setSelectedStore={setSelectedStore}
+        stores={storeManager.stores}
+        onAddStore={storeManager.addStore}
+        onUpdateStore={storeManager.updateStore}
+        onDeleteStore={storeManager.deleteStore}
       />
       <main className="flex-1 p-6 overflow-auto">
-        <div className="max-w-7xl mx-auto">
-          {renderPage()}
-        </div>
+        <div className="max-w-7xl mx-auto">{renderPage()}</div>
       </main>
     </div>
   );
