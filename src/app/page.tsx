@@ -32,24 +32,7 @@ export default function Home() {
       ? storeManager.stores
       : storeManager.stores.filter((s) => userStoreIds?.includes(s.id));
 
-  // Set initial store based on user role
-  useEffect(() => {
-    if (userRole === "store" && userStoreIds?.length) {
-      // For store users, always sync to first assigned store
-      const firstStore = userStoreIds[0];
-      if (selectedStore !== firstStore) {
-        setSelectedStore(firstStore);
-      }
-    } else if (
-      userRole === "admin" &&
-      !selectedStore &&
-      storeManager.stores.length > 0
-    ) {
-      setSelectedStore(storeManager.stores[0].id);
-    }
-  }, [userRole, userStoreIds, storeManager.stores, selectedStore]);
-
-  // Fallback: if selectedStore is empty but visibleStores exist, select the first
+  // Set initial store when no store is selected yet
   useEffect(() => {
     if (!selectedStore && visibleStores.length > 0) {
       setSelectedStore(visibleStores[0].id);

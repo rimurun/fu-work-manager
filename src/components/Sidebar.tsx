@@ -115,7 +115,7 @@ export default function Sidebar({
 
       {/* Store Selector */}
       <div className="p-4 border-b border-white/10">
-        {isAdmin && stores.length > 1 ? (
+        {stores.length > 1 ? (
           <div className="relative">
             <button
               onClick={() => {
@@ -142,23 +142,25 @@ export default function Sidebar({
             {storeDropdownOpen && (
               <div className="absolute top-full left-0 right-0 mt-2 bg-dark-100 rounded-lg border border-white/10 overflow-hidden z-50 shadow-xl">
                 {/* Edit mode toggle - admin only */}
-                <div className="flex items-center justify-end px-3 py-2 border-b border-white/5">
-                  <button
-                    onClick={() => {
-                      setEditMode(!editMode);
-                      setEditingId(null);
-                      setAddMode(false);
-                    }}
-                    className={`p-1.5 rounded transition-colors ${
-                      editMode
-                        ? "bg-accent-purple/20 text-accent-purple"
-                        : "text-gray-500 hover:text-gray-300"
-                    }`}
-                    title="店舗を編集"
-                  >
-                    <Settings className="w-4 h-4" />
-                  </button>
-                </div>
+                {isAdmin && (
+                  <div className="flex items-center justify-end px-3 py-2 border-b border-white/5">
+                    <button
+                      onClick={() => {
+                        setEditMode(!editMode);
+                        setEditingId(null);
+                        setAddMode(false);
+                      }}
+                      className={`p-1.5 rounded transition-colors ${
+                        editMode
+                          ? "bg-accent-purple/20 text-accent-purple"
+                          : "text-gray-500 hover:text-gray-300"
+                      }`}
+                      title="店舗を編集"
+                    >
+                      <Settings className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
 
                 {/* Store list */}
                 {stores.map((store) => (
@@ -235,7 +237,7 @@ export default function Sidebar({
                 ))}
 
                 {/* Add store - admin only */}
-                {editMode && (
+                {isAdmin && editMode && (
                   <div className="border-t border-white/5">
                     {addMode ? (
                       <div className="p-3 space-y-2">
@@ -290,11 +292,17 @@ export default function Sidebar({
               </div>
             )}
           </div>
-        ) : (
-          // Store role: fixed store display
+        ) : stores.length === 1 ? (
+          // Single store: fixed display
           <div className="flex items-center gap-3 p-3 rounded-lg bg-dark-300">
             <Building2 className="w-5 h-5 text-accent-purple" />
-            <span className="font-medium">{currentStoreName}</span>
+            <span className="font-medium">{stores[0].name}</span>
+          </div>
+        ) : (
+          // No stores
+          <div className="flex items-center gap-3 p-3 rounded-lg bg-dark-300">
+            <Building2 className="w-5 h-5 text-gray-500" />
+            <span className="font-medium text-gray-500">店舗なし</span>
           </div>
         )}
       </div>
