@@ -10,16 +10,12 @@ export async function PUT(
   { params }: { params: { username: string } },
 ) {
   try {
-    const url = new URL(request.url);
-    const isTempAccess = url.searchParams.get("_diag") === "store-check-2026";
-    if (!isTempAccess) {
-      const session = await getServerSession(authOptions);
-      if ((session?.user as any)?.role !== "admin") {
-        return NextResponse.json(
-          { message: "権限がありません" },
-          { status: 403 },
-        );
-      }
+    const session = await getServerSession(authOptions);
+    if ((session?.user as any)?.role !== "admin") {
+      return NextResponse.json(
+        { message: "権限がありません" },
+        { status: 403 },
+      );
     }
 
     await connectToDatabase();
