@@ -139,8 +139,8 @@ export default function Dashboard({
   // Use real data or fallback to sample data
   const salesData = data?.salesData || sampleSalesData;
   const mediaDataRaw = data?.mediaData || [];
-  const serviceData = (data?.serviceData || sampleServiceData).filter(
-    (s) => s.name.includes("分"),
+  const serviceData = (data?.serviceData || sampleServiceData).filter((s) =>
+    s.name.includes("分"),
   );
   const hourlyDataRaw = data?.hourlyData || [];
 
@@ -276,9 +276,9 @@ export default function Dashboard({
       });
     }
 
-    // Low utilization hours
+    // Low utilization hours (stricter: < 20% with many casts)
     const lowUtilHours = hourlyData.filter(
-      (h) => h.rate < 25 && h.castCount > 15,
+      (h) => h.rate < 20 && h.castCount > 20,
     );
     if (lowUtilHours.length >= 3) {
       alerts.push({
@@ -290,7 +290,7 @@ export default function Dashboard({
     }
 
     // High utilization hours need more cast
-    const highUtilHours = hourlyData.filter((h) => h.rate > 35);
+    const highUtilHours = hourlyData.filter((h) => h.rate > 38);
     if (highUtilHours.length >= 2) {
       alerts.push({
         type: "info",
@@ -306,6 +306,7 @@ export default function Dashboard({
   const alerts = getAlerts();
 
   // Calculate demand level per hour
+  // Based on industry norms: 25-35% utilization is healthy for this business
   const getDemandInsights = () => {
     return hourlyData.map((h) => {
       const currentRate = h.rate;
@@ -322,13 +323,13 @@ export default function Dashboard({
           type: "high" as const,
           message: "需要高め",
         };
-      } else if (currentRate < 20) {
+      } else if (currentRate < 15) {
         return {
           hour: h.hour,
           type: "low" as const,
           message: "かなり余裕あり",
         };
-      } else if (currentRate < 25 && h.castCount > 15) {
+      } else if (currentRate < 20 && h.castCount > 20) {
         return {
           hour: h.hour,
           type: "low" as const,
@@ -657,50 +658,54 @@ export default function Dashboard({
               </div>
             )}
           </div>
-          <div className="flex flex-col lg:flex-row items-center gap-6">
-            <ResponsiveContainer width="100%" height={280}>
-              <PieChart>
-                <Pie
-                  data={mediaData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={100}
-                  paddingAngle={2}
-                  dataKey="value"
-                >
-                  {mediaData.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={
-                        entry.name === "不明" && unknownPercentage > 20
-                          ? "#ef4444"
-                          : entry.color
-                      }
-                    />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "#1e1e2e",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                    borderRadius: "8px",
-                    color: "#fff",
-                  }}
-                  labelStyle={{ color: "#fff" }}
-                  itemStyle={{ color: "#fff" }}
-                  formatter={pieFormatter}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="w-full lg:w-64 space-y-2">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 items-center">
+            <div className="lg:col-span-2">
+              <ResponsiveContainer width="100%" height={260}>
+                <PieChart>
+                  <Pie
+                    data={mediaData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={55}
+                    outerRadius={95}
+                    paddingAngle={2}
+                    dataKey="value"
+                  >
+                    {mediaData.map((entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={
+                          entry.name === "不明" && unknownPercentage > 20
+                            ? "#ef4444"
+                            : entry.color
+                        }
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#1e1e2e",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      borderRadius: "8px",
+                      color: "#fff",
+                    }}
+                    labelStyle={{ color: "#fff" }}
+                    itemStyle={{ color: "#fff" }}
+                    formatter={pieFormatter}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="lg:col-span-3 space-y-1.5">
               {mediaData.map((entry, index) => {
                 const isUnknownWarning =
                   entry.name === "不明" && unknownPercentage > 20;
+                const percentage =
+                  totalSales > 0 ? (entry.value / totalSales) * 100 : 0;
                 return (
                   <div
                     key={index}
-                    className={`flex items-center gap-2 p-2 rounded ${isUnknownWarning ? "bg-red-500/10" : ""}`}
+                    className={`flex items-center gap-3 p-2.5 rounded-lg ${isUnknownWarning ? "bg-red-500/10" : "bg-dark-200/50"}`}
                   >
                     <div
                       className="w-3 h-3 rounded-full flex-shrink-0"
@@ -711,20 +716,25 @@ export default function Dashboard({
                       }}
                     />
                     <span
-                      className={`text-sm flex-1 truncate ${isUnknownWarning ? "text-red-400 font-medium" : "text-gray-300"}`}
+                      className={`text-sm flex-1 ${isUnknownWarning ? "text-red-400 font-medium" : "text-gray-300"}`}
                       title={entry.name}
                     >
                       {entry.name}
                     </span>
                     <span
-                      className={`text-sm ${isUnknownWarning ? "text-red-400" : "text-gray-500"}`}
+                      className={`text-sm font-medium ${isUnknownWarning ? "text-red-400" : "text-gray-300"}`}
+                    >
+                      {formatCurrency(entry.value)}
+                    </span>
+                    <span
+                      className={`text-sm w-12 text-right ${isUnknownWarning ? "text-red-400" : "text-gray-500"}`}
                     >
                       {entry.count}人
                     </span>
                     <span
-                      className={`text-sm ${isUnknownWarning ? "text-red-400" : "text-gray-500"}`}
+                      className={`text-sm w-10 text-right ${isUnknownWarning ? "text-red-400" : "text-gray-500"}`}
                     >
-                      {((entry.value / totalSales) * 100).toFixed(0)}%
+                      {percentage.toFixed(0)}%
                     </span>
                   </div>
                 );
@@ -784,9 +794,15 @@ export default function Dashboard({
                   <Legend />
                   <ReferenceLine
                     yAxisId="left"
-                    y={30}
+                    y={28}
                     stroke="#22c55e"
                     strokeDasharray="5 5"
+                    label={{
+                      value: "目標28%",
+                      fill: "#22c55e",
+                      fontSize: 10,
+                      position: "right",
+                    }}
                   />
                   <Bar
                     yAxisId="left"
@@ -798,9 +814,9 @@ export default function Dashboard({
                       <Cell
                         key={`cell-${index}`}
                         fill={
-                          entry.rate > 35
+                          entry.rate > 33
                             ? "#34d399"
-                            : entry.rate > 25
+                            : entry.rate > 20
                               ? "#fbbf24"
                               : "#f87171"
                         }
