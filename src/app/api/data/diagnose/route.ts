@@ -1,23 +1,18 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/mongodb";
 import { MonthlyReport, Store, User } from "@/lib/models";
 
 // GET /api/data/diagnose - Show store ID mapping between MonthlyReport and Store collections
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    // Allow temp access via query param for CLI diagnosis
-    const isTempAccess =
-      request.nextUrl.searchParams.get("_diag") === "store-check-2026";
-    if (!isTempAccess) {
-      const session = await getServerSession(authOptions);
-      if ((session?.user as any)?.role !== "admin") {
-        return NextResponse.json(
-          { message: "権限がありません" },
-          { status: 403 },
-        );
-      }
+    const session = await getServerSession(authOptions);
+    if ((session?.user as any)?.role !== "admin") {
+      return NextResponse.json(
+        { message: "権限がありません" },
+        { status: 403 },
+      );
     }
 
     await connectToDatabase();
