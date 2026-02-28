@@ -19,7 +19,8 @@ export async function PUT(
     }
 
     await connectToDatabase();
-    const { storeIds } = await request.json();
+    const body = await request.json();
+    const storeIds = body.storeIds;
 
     if (!Array.isArray(storeIds)) {
       return NextResponse.json(
@@ -28,40 +29,41 @@ export async function PUT(
       );
     }
 
-    console.log(
-      `[USER UPDATE] username=${params.username}, storeIds=${JSON.stringify(storeIds)}`,
-    );
-
-    const user = await User.findOneAndUpdate(
+    // Use updateOne for explicit control
+    const result = await User.updateOne(
       { username: params.username },
       { $set: { storeIds } },
-      { new: true },
-    ).select("username role storeIds");
+    );
 
-    if (!user) {
+    console.log(
+      `[USER UPDATE] ${params.username}: storeIds=${JSON.stringify(storeIds)}, matched=${result.matchedCount}, modified=${result.modifiedCount}`,
+    );
+
+    if (result.matchedCount === 0) {
       return NextResponse.json(
         { message: "ユーザーが見つかりません" },
         { status: 404 },
       );
     }
 
-    // Verify the update
-    const verify = (await User.findOne({ username: params.username })
-      .select("storeIds")
-      .lean()) as any;
+    // Read back from DB to confirm
+    const updated = await User.findOne({ username: params.username })
+      .select("username role storeIds")
+      .lean();
+
     console.log(
-      `[USER UPDATE VERIFY] ${params.username} storeIds=${JSON.stringify(verify?.storeIds)}`,
+      `[USER UPDATE CONFIRM] ${params.username}: storeIds=${JSON.stringify((updated as any)?.storeIds)}`,
     );
 
     return NextResponse.json({
-      username: user.username,
-      role: user.role,
-      storeIds: user.storeIds,
+      username: (updated as any).username,
+      role: (updated as any).role,
+      storeIds: (updated as any).storeIds,
     });
   } catch (error) {
     console.error("User update error:", error);
     return NextResponse.json(
-      { message: "ユーザーの更新に失敗しました" },
+      { message: "ユーザーの更新に失敗しました: " + String(error) },
       { status: 500 },
     );
   }

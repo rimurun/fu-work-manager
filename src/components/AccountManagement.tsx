@@ -56,6 +56,15 @@ export default function AccountManagement({ stores }: AccountManagementProps) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.message || "保存に失敗しました");
       }
+      const updated = await res.json();
+      // Update local state with API response to confirm persistence
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.username === updated.username
+            ? { ...u, storeIds: updated.storeIds }
+            : u,
+        ),
+      );
       setSaved(user.username);
       setTimeout(() => setSaved(null), 3000);
     } catch (err) {
