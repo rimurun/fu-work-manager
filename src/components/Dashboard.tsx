@@ -5,7 +5,6 @@ import {
   TrendingDown,
   DollarSign,
   Users,
-  Percent,
   Calendar,
   AlertCircle,
   UserPlus,
@@ -139,9 +138,32 @@ export default function Dashboard({
   // Use real data or fallback to sample data
   const salesData = data?.salesData || sampleSalesData;
   const mediaDataRaw = data?.mediaData || [];
-  const serviceData = (data?.serviceData || sampleServiceData).filter((s) =>
-    s.name.includes("分"),
-  );
+  // Filter to allowed courses and sort by sales descending
+  const ALLOWED_COURSES = new Set([
+    "60分",
+    "80分",
+    "100分",
+    "120分",
+    "60+10分",
+    "80+10分",
+    "100+10分",
+    "120+10分",
+    "60分+10分",
+    "80分+10分",
+    "100分+10分",
+    "120分+10分",
+    "事前予約80+20分",
+    "事前予約100+20分",
+    "事前予約120+20分",
+    "事前予約80分+20分",
+    "事前予約100分+20分",
+    "事前予約120分+20分",
+    "延長30分+",
+    "延長30分",
+  ]);
+  const serviceData = (data?.serviceData || sampleServiceData)
+    .filter((s) => ALLOWED_COURSES.has(s.name.replace(/＋/g, "+")))
+    .sort((a, b) => b.sales - a.sales);
   const hourlyDataRaw = data?.hourlyData || [];
 
   // Transform sales data for charts
@@ -551,13 +573,32 @@ export default function Dashboard({
             color="#06b6d4"
           />
           <StatCard
-            title="平均稼働率"
+            title="新規・会員比率"
             value={
-              hourlyData.length > 0
-                ? `${(hourlyData.reduce((sum, h) => sum + h.rate, 0) / hourlyData.length).toFixed(1)}%`
+              data?.customerSegment?.length
+                ? (() => {
+                    const seg = data.customerSegment;
+                    const newC = seg.find((s) => s.segment.includes("新規"));
+                    const memC = seg.find((s) => s.segment.includes("会員"));
+                    if (newC && memC)
+                      return `新規 ${newC.percentage.toFixed(0)}% / 会員 ${memC.percentage.toFixed(0)}%`;
+                    return "-";
+                  })()
                 : "-"
             }
-            icon={Percent}
+            subValue={
+              data?.customerSegment?.length
+                ? (() => {
+                    const seg = data.customerSegment;
+                    const newC = seg.find((s) => s.segment.includes("新規"));
+                    const memC = seg.find((s) => s.segment.includes("会員"));
+                    if (newC && memC)
+                      return `新規 ${newC.count}人 / 会員 ${memC.count}人`;
+                    return undefined;
+                  })()
+                : undefined
+            }
+            icon={Users}
             color="#ec4899"
           />
         </div>
@@ -908,7 +949,10 @@ export default function Dashboard({
       {data && (
         <div className="glass rounded-xl p-6">
           <h3 className="text-lg font-semibold mb-4">コース別売上</h3>
-          <ResponsiveContainer width="100%" height={280}>
+          <ResponsiveContainer
+            width="100%"
+            height={Math.max(280, serviceData.length * 32 + 40)}
+          >
             <BarChart data={serviceData} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" stroke="#333" />
               <XAxis
@@ -920,7 +964,7 @@ export default function Dashboard({
                 dataKey="name"
                 type="category"
                 stroke="#888"
-                width={70}
+                width={130}
                 fontSize={11}
               />
               <Tooltip

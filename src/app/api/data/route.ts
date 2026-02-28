@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/mongodb";
 import { MonthlyReport } from "@/lib/models";
 
@@ -6,6 +8,12 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    const userRole = (session?.user as any)?.role;
+    const userStoreIds = (session?.user as any)?.storeIds as
+      | string[]
+      | undefined;
+
     const searchParams = request.nextUrl.searchParams;
     const store = searchParams.get("store");
     const year = searchParams.get("year");
@@ -15,6 +23,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         { message: "店舗IDが必要です" },
         { status: 400 },
+      );
+    }
+
+    // Store role can only access own store data
+    if (userRole === "store" && !userStoreIds?.includes(store)) {
+      return NextResponse.json(
+        { message: "権限がありません" },
+        { status: 403 },
       );
     }
 
