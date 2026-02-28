@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/mongodb";
-import { MonthlyReport } from "@/lib/models";
-import { parseExcelFile } from "@/lib/parseExcel";
+import { MonthlyReport, ParseConfig } from "@/lib/models";
+import { parseExcelFile, DEFAULT_PARSE_CONFIG } from "@/lib/parseExcel";
+import type { ParseConfig as ParseConfigType } from "@/lib/parseExcel";
 
 export const dynamic = "force-dynamic";
 
@@ -39,11 +40,17 @@ export async function POST(request: NextRequest) {
     // Read file buffer
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    // Parse Excel
-    const parsedData = parseExcelFile(buffer);
-
     // Connect to MongoDB
     await connectToDatabase();
+
+    // Fetch store-specific parse config
+    const configDoc = await ParseConfig.findOne({ storeId: store }).lean();
+    const parseConfig: ParseConfigType = configDoc
+      ? (configDoc as any).config
+      : DEFAULT_PARSE_CONFIG;
+
+    // Parse Excel with store-specific config
+    const parsedData = parseExcelFile(buffer, parseConfig);
 
     // Upsert report (use $set explicitly to avoid replacing other documents)
     await MonthlyReport.findOneAndUpdate(

@@ -1,5 +1,83 @@
 import * as XLSX from "xlsx";
 
+// Per-sheet column configuration
+export interface SheetColumnConfig {
+  startRow: number;
+  columns: Record<string, number>;
+}
+
+export type ParseConfig = {
+  sales: SheetColumnConfig;
+  castSales: SheetColumnConfig;
+  shimei: SheetColumnConfig;
+  repeatRate: SheetColumnConfig;
+  utilization: SheetColumnConfig;
+  absence: SheetColumnConfig;
+  late: SheetColumnConfig;
+  extension: SheetColumnConfig;
+  service: SheetColumnConfig;
+  hourly: SheetColumnConfig;
+  media: SheetColumnConfig;
+  customerSegment: SheetColumnConfig;
+};
+
+export const DEFAULT_PARSE_CONFIG: ParseConfig = {
+  sales: {
+    startRow: 1,
+    columns: { date: 0, sales: 1, expenses: 2, profit: 3 },
+  },
+  castSales: {
+    startRow: 1,
+    columns: { name: 0, sales: 1 },
+  },
+  shimei: {
+    startRow: 1,
+    columns: {
+      name: 0,
+      photoNew: 2,
+      staffRecommend: 5,
+      photoMember: 6,
+      honShimei: 7,
+    },
+  },
+  repeatRate: {
+    startRow: 2,
+    columns: { name: 0, totalCustomers: 1, repeatCustomers: 2, repeatRate: 4 },
+  },
+  utilization: {
+    startRow: 2,
+    columns: { name: 0, rate: 3 },
+  },
+  absence: {
+    startRow: 2,
+    columns: { name: 0, rate: 3 },
+  },
+  late: {
+    startRow: 2,
+    columns: { name: 0, rate: 3 },
+  },
+  extension: {
+    startRow: 2,
+    columns: { name: 0, rate: 3 },
+  },
+  service: {
+    startRow: 1,
+    columns: { name: 0, sales: 1 },
+  },
+  hourly: {
+    startRow: 1,
+    columns: { hour: 0, count: 1, castCount: 2, rate: 3 },
+  },
+  media: {
+    startRow: 1,
+    columns: { name: 0, sales: 1, percentage: 2, count: 3 },
+  },
+  customerSegment: {
+    startRow: 1,
+    columns: { segment: 0, percentage: 1, count: 2 },
+  },
+};
+
 export interface ParsedData {
   salesData: {
     date: Date;
@@ -44,7 +122,10 @@ export interface ParsedData {
   }[];
 }
 
-export function parseExcelFile(buffer: Buffer): ParsedData {
+export function parseExcelFile(
+  buffer: Buffer,
+  config: ParseConfig = DEFAULT_PARSE_CONFIG,
+): ParsedData {
   const workbook = XLSX.read(buffer, { type: "buffer" });
 
   const result: ParsedData = {
@@ -61,46 +142,78 @@ export function parseExcelFile(buffer: Buffer): ParsedData {
     const data = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as any[][];
 
     if (sheetName.includes("売上") && sheetName.includes("推移")) {
-      result.salesData = parseSalesSheet(data);
+      result.salesData = parseSalesSheet(data, config.sales);
     } else if (sheetName.includes("コンパニオン別売上")) {
-      result.castData = parseCastSalesSheet(data, result.castData);
+      result.castData = parseCastSalesSheet(
+        data,
+        result.castData,
+        config.castSales,
+      );
     } else if (sheetName.includes("サービス別")) {
-      result.serviceData = parseServiceSheet(data);
+      result.serviceData = parseServiceSheet(data, config.service);
     } else if (sheetName.includes("時間帯別")) {
-      result.hourlyData = parseHourlySheet(data);
+      result.hourlyData = parseHourlySheet(data, config.hourly);
     } else if (sheetName.includes("媒体")) {
-      result.mediaData = parseMediaSheet(data);
+      result.mediaData = parseMediaSheet(data, config.media);
     } else if (sheetName.includes("顧客区分")) {
-      result.customerSegment = parseCustomerSegmentSheet(data);
+      result.customerSegment = parseCustomerSegmentSheet(
+        data,
+        config.customerSegment,
+      );
     } else if (sheetName.includes("指名集計表") && !sheetName.includes("率")) {
-      result.castData = parseShimeiSheet(data, result.castData);
+      result.castData = parseShimeiSheet(data, result.castData, config.shimei);
     } else if (sheetName.includes("リピート率")) {
-      result.castData = parseRepeatRateSheet(data, result.castData);
+      result.castData = parseRepeatRateSheet(
+        data,
+        result.castData,
+        config.repeatRate,
+      );
     } else if (sheetName.includes("稼働率")) {
-      result.castData = parseUtilizationSheet(data, result.castData);
+      result.castData = parseRateSheet(
+        data,
+        result.castData,
+        config.utilization,
+        "utilizationRate",
+      );
     } else if (sheetName.includes("欠勤率")) {
-      result.castData = parseAbsenceSheet(data, result.castData);
+      result.castData = parseRateSheet(
+        data,
+        result.castData,
+        config.absence,
+        "absenceRate",
+      );
     } else if (sheetName.includes("遅刻率")) {
-      result.castData = parseLateSheet(data, result.castData);
+      result.castData = parseRateSheet(
+        data,
+        result.castData,
+        config.late,
+        "lateRate",
+      );
     } else if (sheetName.includes("延長率")) {
-      result.castData = parseExtensionSheet(data, result.castData);
+      result.castData = parseRateSheet(
+        data,
+        result.castData,
+        config.extension,
+        "extensionRate",
+      );
     }
   });
 
   return result;
 }
 
-// Excel layout:
-// Row 0: ["日付","売上[円]","支出[円]","粗利[円]"]
-// Row 1+: [excelDate, sales, expenses, profit]
-function parseSalesSheet(data: any[][]): ParsedData["salesData"] {
+function parseSalesSheet(
+  data: any[][],
+  cfg: SheetColumnConfig,
+): ParsedData["salesData"] {
   const result: ParsedData["salesData"] = [];
+  const c = cfg.columns;
 
-  for (let i = 1; i < data.length; i++) {
+  for (let i = cfg.startRow; i < data.length; i++) {
     const row = data[i];
-    if (!row || row[0] === undefined) continue;
+    if (!row || row[c.date] === undefined) continue;
 
-    const dateValue = row[0];
+    const dateValue = row[c.date];
     let date: Date | null = null;
 
     if (typeof dateValue === "number") {
@@ -121,31 +234,30 @@ function parseSalesSheet(data: any[][]): ParsedData["salesData"] {
 
     result.push({
       date,
-      sales: Number(row[1]) || 0,
-      expenses: Number(row[2]) || 0,
-      profit: Number(row[3]) || 0,
+      sales: Number(row[c.sales]) || 0,
+      expenses: Number(row[c.expenses]) || 0,
+      profit: Number(row[c.profit]) || 0,
     });
   }
 
   return result;
 }
 
-// Excel layout:
-// Row 0: ["コンパニオン","売上[円]"]
-// Row 1+: [name, sales]
 function parseCastSalesSheet(
   data: any[][],
   existing: ParsedData["castData"],
+  cfg: SheetColumnConfig,
 ): ParsedData["castData"] {
   const castMap = new Map(existing.map((c) => [c.name, c]));
+  const col = cfg.columns;
 
-  for (let i = 1; i < data.length; i++) {
+  for (let i = cfg.startRow; i < data.length; i++) {
     const row = data[i];
-    if (!row || !row[0]) continue;
+    if (!row || !row[col.name]) continue;
 
-    const name = String(row[0]).trim();
+    const name = String(row[col.name]).trim();
     if (name.includes("合計")) continue;
-    const sales = Number(row[1]) || 0;
+    const sales = Number(row[col.sales]) || 0;
 
     if (!castMap.has(name)) {
       castMap.set(name, {
@@ -171,20 +283,19 @@ function parseCastSalesSheet(
   return Array.from(castMap.values());
 }
 
-// Excel layout:
-// Row 0: ["コンパニオン","フリー(新規)","写真指名(新規)","---","フリー(会員)","スタッフオススメ(会員)","写真指名(会員)","本指名(会員)","---","延長","指名合計","フリー本数","売上本数"]
-// Row 1+: [name, freeNew, photoNew, sep, freeMember, staffRec, photoMember, honShimei, sep, extension, total, freeCount, salesCount]
 function parseShimeiSheet(
   data: any[][],
   existing: ParsedData["castData"],
+  cfg: SheetColumnConfig,
 ): ParsedData["castData"] {
   const castMap = new Map(existing.map((c) => [c.name, c]));
+  const col = cfg.columns;
 
-  for (let i = 1; i < data.length; i++) {
+  for (let i = cfg.startRow; i < data.length; i++) {
     const row = data[i];
-    if (!row || !row[0]) continue;
+    if (!row || !row[col.name]) continue;
 
-    const name = String(row[0]).trim();
+    const name = String(row[col.name]).trim();
     if (name.includes("合計")) continue;
 
     if (!castMap.has(name)) {
@@ -205,230 +316,153 @@ function parseShimeiSheet(
     }
 
     const cast = castMap.get(name)!;
-    cast.staffRecommend = Number(row[5]) || 0; // スタッフオススメ(会員)
-    cast.photoShimei = (Number(row[2]) || 0) + (Number(row[6]) || 0); // 写真指名(新規) + 写真指名(会員)
-    cast.honShimei = Number(row[7]) || 0; // 本指名(会員)
+    cast.staffRecommend = Number(row[col.staffRecommend]) || 0;
+    cast.photoShimei =
+      (Number(row[col.photoNew]) || 0) + (Number(row[col.photoMember]) || 0);
+    cast.honShimei = Number(row[col.honShimei]) || 0;
   }
 
   return Array.from(castMap.values());
 }
 
-// Excel layout (2-row header):
-// Row 0: ["店舗：xxx"]
-// Row 1: ["コンパニオン","客数[人]（全期間）","リピート数[人]（全期間）","リピート数[人]（指定期間内）","リピート率[%]（全期間）","リピート率[%]（指定期間内）"]
-// Row 2+: [name, totalCustomers, repeatAll, repeatPeriod, repeatRateAll, repeatRatePeriod]
 function parseRepeatRateSheet(
   data: any[][],
   existing: ParsedData["castData"],
+  cfg: SheetColumnConfig,
 ): ParsedData["castData"] {
   const castMap = new Map(existing.map((c) => [c.name, c]));
+  const col = cfg.columns;
 
-  for (let i = 2; i < data.length; i++) {
+  for (let i = cfg.startRow; i < data.length; i++) {
     const row = data[i];
-    if (!row || !row[0]) continue;
+    if (!row || !row[col.name]) continue;
 
-    const name = String(row[0]).trim();
+    const name = String(row[col.name]).trim();
     if (name.includes("合計")) continue;
 
     if (castMap.has(name)) {
       const cast = castMap.get(name)!;
-      cast.totalCustomers = Number(row[1]) || 0;
-      cast.repeatCustomers = Number(row[2]) || 0;
-      cast.repeatRate = Number(row[4]) || 0;
+      cast.totalCustomers = Number(row[col.totalCustomers]) || 0;
+      cast.repeatCustomers = Number(row[col.repeatCustomers]) || 0;
+      cast.repeatRate = Number(row[col.repeatRate]) || 0;
     }
   }
 
   return Array.from(castMap.values());
 }
 
-// Excel layout (2-row header):
-// Row 0: ["店舗：xxx"]
-// Row 1: ["コンパニオン","接客時間[分]","出勤時間[分]","稼働率[%]"]
-// Row 2+: [name, serviceTime, workTime, utilizationRate]
-function parseUtilizationSheet(
+// Generic rate sheet parser (utilization, absence, late, extension)
+function parseRateSheet(
   data: any[][],
   existing: ParsedData["castData"],
+  cfg: SheetColumnConfig,
+  field: "utilizationRate" | "absenceRate" | "lateRate" | "extensionRate",
 ): ParsedData["castData"] {
   const castMap = new Map(existing.map((c) => [c.name, c]));
+  const col = cfg.columns;
 
-  for (let i = 2; i < data.length; i++) {
+  for (let i = cfg.startRow; i < data.length; i++) {
     const row = data[i];
-    if (!row || !row[0]) continue;
+    if (!row || !row[col.name]) continue;
 
-    const name = String(row[0]).trim();
+    const name = String(row[col.name]).trim();
     if (name.includes("合計")) continue;
 
     if (castMap.has(name)) {
       const cast = castMap.get(name)!;
-      cast.utilizationRate = Number(row[3]) || 0;
+      cast[field] = Number(row[col.rate]) || 0;
     }
   }
 
   return Array.from(castMap.values());
 }
 
-// Excel layout (2-row header):
-// Row 0: ["店舗：xxx"]
-// Row 1: ["コンパニオン","欠勤日数[日]","シフト日数[日]","欠勤率[%]"]
-// Row 2+: [name, absenceDays, shiftDays, absenceRate]
-function parseAbsenceSheet(
+function parseServiceSheet(
   data: any[][],
-  existing: ParsedData["castData"],
-): ParsedData["castData"] {
-  const castMap = new Map(existing.map((c) => [c.name, c]));
-
-  for (let i = 2; i < data.length; i++) {
-    const row = data[i];
-    if (!row || !row[0]) continue;
-
-    const name = String(row[0]).trim();
-    if (name.includes("合計")) continue;
-
-    if (castMap.has(name)) {
-      const cast = castMap.get(name)!;
-      cast.absenceRate = Number(row[3]) || 0;
-    }
-  }
-
-  return Array.from(castMap.values());
-}
-
-// Excel layout (2-row header):
-// Row 0: ["店舗：xxx"]
-// Row 1: ["コンパニオン","遅刻日数[日]","シフト日数[日]","遅刻率[%]"]
-// Row 2+: [name, lateDays, shiftDays, lateRate]
-function parseLateSheet(
-  data: any[][],
-  existing: ParsedData["castData"],
-): ParsedData["castData"] {
-  const castMap = new Map(existing.map((c) => [c.name, c]));
-
-  for (let i = 2; i < data.length; i++) {
-    const row = data[i];
-    if (!row || !row[0]) continue;
-
-    const name = String(row[0]).trim();
-    if (name.includes("合計")) continue;
-
-    if (castMap.has(name)) {
-      const cast = castMap.get(name)!;
-      cast.lateRate = Number(row[3]) || 0;
-    }
-  }
-
-  return Array.from(castMap.values());
-}
-
-// Excel layout (2-row header):
-// Row 0: ["店舗：xxx"]
-// Row 1: ["コンパニオン","延長本数","売上本数","延長率[%]"]
-// Row 2+: [name, extensionCount, salesCount, extensionRate]
-function parseExtensionSheet(
-  data: any[][],
-  existing: ParsedData["castData"],
-): ParsedData["castData"] {
-  const castMap = new Map(existing.map((c) => [c.name, c]));
-
-  for (let i = 2; i < data.length; i++) {
-    const row = data[i];
-    if (!row || !row[0]) continue;
-
-    const name = String(row[0]).trim();
-    if (name.includes("合計")) continue;
-
-    if (castMap.has(name)) {
-      const cast = castMap.get(name)!;
-      cast.extensionRate = Number(row[3]) || 0;
-    }
-  }
-
-  return Array.from(castMap.values());
-}
-
-// Excel layout:
-// Row 0: ["サービス","売上[円]"]
-// Row 1+: [name, sales]
-function parseServiceSheet(data: any[][]): ParsedData["serviceData"] {
+  cfg: SheetColumnConfig,
+): ParsedData["serviceData"] {
   const result: ParsedData["serviceData"] = [];
+  const col = cfg.columns;
 
-  for (let i = 1; i < data.length; i++) {
+  for (let i = cfg.startRow; i < data.length; i++) {
     const row = data[i];
-    if (!row || !row[0]) continue;
+    if (!row || !row[col.name]) continue;
 
     result.push({
-      name: String(row[0]).trim(),
-      sales: Number(row[1]) || 0,
+      name: String(row[col.name]).trim(),
+      sales: Number(row[col.sales]) || 0,
     });
   }
 
   return result;
 }
 
-// Excel layout:
-// Row 0: ["時間帯","売上[件数]","ｺﾝﾊﾟﾆｵﾝ出勤[人]","稼働率[%]"]
-// Row 1+: ["5時", count, castCount, utilizationRate]
-function parseHourlySheet(data: any[][]): ParsedData["hourlyData"] {
+function parseHourlySheet(
+  data: any[][],
+  cfg: SheetColumnConfig,
+): ParsedData["hourlyData"] {
   const result: ParsedData["hourlyData"] = [];
+  const col = cfg.columns;
 
-  for (let i = 1; i < data.length; i++) {
+  for (let i = cfg.startRow; i < data.length; i++) {
     const row = data[i];
-    if (!row || row[0] === undefined) continue;
+    if (!row || row[col.hour] === undefined) continue;
 
-    const hourStr = String(row[0]).replace("時", "");
+    const hourStr = String(row[col.hour]).replace("時", "");
     const hour = parseInt(hourStr, 10);
 
     if (isNaN(hour)) continue;
 
     result.push({
       hour,
-      count: Number(row[1]) || 0,
-      castCount: Number(row[2]) || 0,
-      utilizationRate: Number(row[3]) || 0,
+      count: Number(row[col.count]) || 0,
+      castCount: Number(row[col.castCount]) || 0,
+      utilizationRate: Number(row[col.rate]) || 0,
     });
   }
 
   return result;
 }
 
-// Excel layout:
-// Row 0: ["媒体","売上[円]","内訳[%]","内訳[人]","合計[人]"]
-// Row 1+: [name, sales, percentage, count, total]
-function parseMediaSheet(data: any[][]): ParsedData["mediaData"] {
+function parseMediaSheet(
+  data: any[][],
+  cfg: SheetColumnConfig,
+): ParsedData["mediaData"] {
   const result: ParsedData["mediaData"] = [];
+  const col = cfg.columns;
 
-  for (let i = 1; i < data.length; i++) {
+  for (let i = cfg.startRow; i < data.length; i++) {
     const row = data[i];
-    if (!row || !row[0]) continue;
-    if (String(row[0]).includes("合計")) continue;
+    if (!row || !row[col.name]) continue;
+    if (String(row[col.name]).includes("合計")) continue;
 
     result.push({
-      name: String(row[0]).trim(),
-      sales: Number(row[1]) || 0,
-      percentage: Number(row[2]) || 0,
-      count: Number(row[3]) || 0,
+      name: String(row[col.name]).trim(),
+      sales: Number(row[col.sales]) || 0,
+      percentage: Number(row[col.percentage]) || 0,
+      count: Number(row[col.count]) || 0,
     });
   }
 
   return result;
 }
 
-// Excel layout:
-// Row 0: ["顧客区分","内訳[%]","内訳[人]","合計[人]"]
-// Row 1+: [segment, percentage, count, total]
 function parseCustomerSegmentSheet(
   data: any[][],
+  cfg: SheetColumnConfig,
 ): ParsedData["customerSegment"] {
   const result: ParsedData["customerSegment"] = [];
+  const col = cfg.columns;
 
-  for (let i = 1; i < data.length; i++) {
+  for (let i = cfg.startRow; i < data.length; i++) {
     const row = data[i];
-    if (!row || !row[0]) continue;
-    if (String(row[0]).includes("合計")) continue;
+    if (!row || !row[col.segment]) continue;
+    if (String(row[col.segment]).includes("合計")) continue;
 
     result.push({
-      segment: String(row[0]).trim(),
-      percentage: Number(row[1]) || 0,
-      count: Number(row[2]) || 0,
+      segment: String(row[col.segment]).trim(),
+      percentage: Number(row[col.percentage]) || 0,
+      count: Number(row[col.count]) || 0,
     });
   }
 

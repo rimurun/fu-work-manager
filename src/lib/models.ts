@@ -147,3 +147,18 @@ const UserSchema = new Schema<IUser>({
 
 export const User =
   mongoose.models.User || mongoose.model<IUser>("User", UserSchema);
+
+// Parse Config Schema (per-store Excel column mappings)
+export interface IParseConfig extends Document {
+  storeId: string;
+  config: Record<string, any>;
+}
+
+const ParseConfigSchema = new Schema<IParseConfig>({
+  storeId: { type: String, required: true, unique: true },
+  config: { type: Schema.Types.Mixed, required: true },
+});
+
+export const ParseConfig =
+  mongoose.models.ParseConfig ||
+  mongoose.model<IParseConfig>("ParseConfig", ParseConfigSchema);
