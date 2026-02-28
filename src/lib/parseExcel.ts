@@ -459,8 +459,12 @@ function parseCustomerSegmentSheet(
     if (!row || !row[col.segment]) continue;
     if (String(row[col.segment]).includes("合計")) continue;
 
+    let segment = String(row[col.segment]).trim();
+    // Normalize "リピーター" to "会員"
+    if (segment === "リピーター") segment = "会員";
+
     result.push({
-      segment: String(row[col.segment]).trim(),
+      segment,
       percentage: Number(row[col.percentage]) || 0,
       count: Number(row[col.count]) || 0,
     });
