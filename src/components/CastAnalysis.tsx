@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { useIsMobile } from "@/hooks/useIsMobile";
 import {
   TrendingUp,
   TrendingDown,
@@ -326,6 +327,7 @@ export default function CastAnalysis({
   setSelectedYear,
   setSelectedMonth,
 }: CastAnalysisProps) {
+  const isMobile = useIsMobile();
   const [selectedCast, setSelectedCast] = useState<number | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>("sales");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
@@ -502,12 +504,14 @@ export default function CastAnalysis({
   const SortHeader = ({
     label,
     sortKeyName,
+    className,
   }: {
     label: string;
     sortKeyName: SortKey;
+    className?: string;
   }) => (
     <th
-      className="px-3 py-3 cursor-pointer hover:bg-dark-200 transition-colors select-none"
+      className={`px-3 py-3 cursor-pointer hover:bg-dark-200 transition-colors select-none${className ? ` ${className}` : ""}`}
       onClick={() => handleSort(sortKeyName)}
     >
       <div className="flex items-center gap-1">
@@ -552,7 +556,7 @@ export default function CastAnalysis({
       {/* Header with Month Selector */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">キャスト分析</h1>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">キャスト分析</h1>
           <p className="text-gray-400 mt-1">
             {storeName} - {selectedYear}年{selectedMonth}月
           </p>
@@ -571,12 +575,12 @@ export default function CastAnalysis({
               </option>
             ))}
           </select>
-          <div className="flex gap-1">
+          <div className="flex flex-wrap gap-1">
             {months.map((month) => (
               <button
                 key={month}
                 onClick={() => setSelectedMonth(month)}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                className={`px-2 sm:px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all ${
                   selectedMonth === month
                     ? "bg-accent-purple text-white"
                     : "text-gray-400 hover:text-white hover:bg-dark-100"
@@ -591,7 +595,7 @@ export default function CastAnalysis({
 
       {/* No Data State */}
       {!data && (
-        <div className="glass rounded-xl p-12 text-center">
+        <div className="glass rounded-xl p-6 sm:p-8 md:p-12 text-center">
           <Upload className="w-12 h-12 text-gray-500 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-gray-300 mb-2">
             データがありません
@@ -614,14 +618,14 @@ export default function CastAnalysis({
               <Users className="w-4 h-4" />
               <span className="text-xs">総キャスト</span>
             </div>
-            <p className="text-xl font-bold">{castData.length}名</p>
+            <p className="text-base sm:text-xl font-bold">{castData.length}名</p>
           </div>
           <div className="glass rounded-xl p-4">
             <div className="flex items-center gap-2 text-gray-400 mb-1">
               <Award className="w-4 h-4" />
               <span className="text-xs">平均売上</span>
             </div>
-            <p className="text-xl font-bold">
+            <p className="text-base sm:text-xl font-bold">
               {castData.length > 0
                 ? formatCurrency(
                     castData.reduce((sum, c) => sum + c.sales, 0) /
@@ -635,7 +639,7 @@ export default function CastAnalysis({
               <Heart className="w-4 h-4" />
               <span className="text-xs">平均本指名</span>
             </div>
-            <p className="text-xl font-bold text-pink-400">
+            <p className="text-base sm:text-xl font-bold text-pink-400">
               {castData.length > 0
                 ? (
                     castData.reduce((sum, c) => sum + c.honShimei, 0) /
@@ -649,7 +653,7 @@ export default function CastAnalysis({
               <Target className="w-4 h-4" />
               <span className="text-xs">エース</span>
             </div>
-            <p className="text-xl font-bold text-yellow-400">
+            <p className="text-base sm:text-xl font-bold text-yellow-400">
               {castData.filter((c) => getJudgment(c).label === "エース").length}
               名
             </p>
@@ -659,7 +663,7 @@ export default function CastAnalysis({
               <AlertTriangle className="w-4 h-4" />
               <span className="text-xs">要注意</span>
             </div>
-            <p className="text-xl font-bold text-orange-400">
+            <p className="text-base sm:text-xl font-bold text-orange-400">
               {
                 castData.filter((c) =>
                   ["勤怠△", "育成"].includes(getJudgment(c).label),
@@ -673,7 +677,7 @@ export default function CastAnalysis({
               <UserMinus className="w-4 h-4" />
               <span className="text-xs">離脱リスク</span>
             </div>
-            <p className="text-xl font-bold text-red-400">
+            <p className="text-base sm:text-xl font-bold text-red-400">
               {
                 castData.filter((c) =>
                   ["high", "medium"].includes(getAttritionRisk(c).level),
@@ -837,13 +841,13 @@ export default function CastAnalysis({
                 <tr className="text-left">
                   <th className="px-3 py-3">キャスト</th>
                   <SortHeader label="売上" sortKeyName="sales" />
-                  <SortHeader label="本指名" sortKeyName="honShimei" />
-                  <SortHeader label="写真" sortKeyName="photoShimei" />
-                  <SortHeader label="リピ率" sortKeyName="repeatRate" />
-                  <SortHeader label="延長率" sortKeyName="extensionRate" />
-                  <SortHeader label="稼働率" sortKeyName="utilizationRate" />
-                  <SortHeader label="欠勤率" sortKeyName="absenceRate" />
-                  <th className="px-3 py-3">タイプ</th>
+                  <SortHeader label="本指名" sortKeyName="honShimei" className="hidden sm:table-cell" />
+                  <SortHeader label="写真" sortKeyName="photoShimei" className="hidden lg:table-cell" />
+                  <SortHeader label="リピ率" sortKeyName="repeatRate" className="hidden sm:table-cell" />
+                  <SortHeader label="延長率" sortKeyName="extensionRate" className="hidden lg:table-cell" />
+                  <SortHeader label="稼働率" sortKeyName="utilizationRate" className="hidden lg:table-cell" />
+                  <SortHeader label="欠勤率" sortKeyName="absenceRate" className="hidden md:table-cell" />
+                  <th className="px-3 py-3 hidden md:table-cell">タイプ</th>
                   <th className="px-3 py-3">判定</th>
                 </tr>
               </thead>
@@ -879,19 +883,19 @@ export default function CastAnalysis({
                       <td className="px-3 py-3 font-medium">
                         {formatCurrency(cast.sales)}
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-3 py-3 hidden sm:table-cell">
                         <div className="flex items-center gap-1">
                           <Heart className="w-3 h-3 text-pink-400" />
                           <span>{cast.honShimei}</span>
                         </div>
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-3 py-3 hidden lg:table-cell">
                         <div className="flex items-center gap-1">
                           <Eye className="w-3 h-3 text-cyan-400" />
                           <span>{cast.photoShimei}</span>
                         </div>
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-3 py-3 hidden sm:table-cell">
                         <span
                           className={
                             cast.repeatRate >= 30
@@ -904,7 +908,7 @@ export default function CastAnalysis({
                           {cast.repeatRate.toFixed(1)}%
                         </span>
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-3 py-3 hidden lg:table-cell">
                         <div className="flex items-center gap-1">
                           <span
                             className={
@@ -920,7 +924,7 @@ export default function CastAnalysis({
                           )}
                         </div>
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-3 py-3 hidden lg:table-cell">
                         <span
                           className={
                             cast.utilizationRate >= 40
@@ -933,7 +937,7 @@ export default function CastAnalysis({
                           {cast.utilizationRate.toFixed(1)}%
                         </span>
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-3 py-3 hidden md:table-cell">
                         <span
                           className={
                             cast.absenceRate <= 10
@@ -946,7 +950,7 @@ export default function CastAnalysis({
                           {cast.absenceRate.toFixed(1)}%
                         </span>
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-3 py-3 hidden md:table-cell">
                         <span className={type.color}>{type.label}</span>
                       </td>
                       <td className="px-3 py-3">
@@ -973,7 +977,7 @@ export default function CastAnalysis({
             <h3 className="text-lg font-semibold mb-4">
               本指名率ランキング（5件以上）
             </h3>
-            <ResponsiveContainer width="100%" height={280}>
+            <ResponsiveContainer width="100%" height={isMobile ? 200 : 280}>
               <BarChart data={honShimeiRanking} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="#333" />
                 <XAxis
@@ -1046,7 +1050,7 @@ export default function CastAnalysis({
               )}
             </h3>
             {selectedCastDataItem ? (
-              <ResponsiveContainer width="100%" height={280}>
+              <ResponsiveContainer width="100%" height={isMobile ? 200 : 280}>
                 <RadarChart data={getRadarData(selectedCastDataItem)}>
                   <PolarGrid stroke="#333" />
                   <PolarAngleAxis

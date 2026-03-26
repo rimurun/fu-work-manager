@@ -15,6 +15,7 @@ import {
   LogOut,
   UserCog,
 } from "lucide-react";
+// ※ X は既にインポート済みのためクローズボタンにも流用
 import { useState } from "react";
 import type { Store } from "@/lib/stores";
 
@@ -32,6 +33,8 @@ interface SidebarProps {
   userRole: "admin" | "store";
   userName: string;
   onLogout: () => void;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 export default function Sidebar({
@@ -46,6 +49,8 @@ export default function Sidebar({
   userRole,
   userName,
   onLogout,
+  isOpen,
+  onClose,
 }: SidebarProps) {
   const [storeDropdownOpen, setStoreDropdownOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -106,11 +111,33 @@ export default function Sidebar({
   };
 
   return (
-    <aside className="w-64 bg-dark-200 border-r border-white/10 flex flex-col">
+    <>
+      {/* モバイル用オーバーレイ */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 z-40 md:hidden"
+          onClick={onClose}
+        />
+      )}
+
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-dark-200 border-r border-white/10 flex flex-col transform transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0" : "-translate-x-full"} md:static md:translate-x-0 md:z-auto`}
+      >
       {/* Logo */}
       <div className="p-6 border-b border-white/10">
-        <h1 className="text-2xl font-bold gradient-text">FU Manager</h1>
-        <p className="text-sm text-gray-500 mt-1">Business Analytics</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold gradient-text">FU Manager</h1>
+            <p className="text-sm text-gray-500 mt-1">Business Analytics</p>
+          </div>
+          {/* モバイル用クローズボタン */}
+          <button
+            onClick={onClose}
+            className="p-2 text-gray-500 hover:text-white hover:bg-dark-100 rounded-lg transition-colors md:hidden"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
       {/* Store Selector */}
@@ -205,6 +232,7 @@ export default function Sidebar({
                             if (!editMode) {
                               setSelectedStore(store.id);
                               setStoreDropdownOpen(false);
+                              onClose();
                             }
                           }}
                           className={`flex-1 text-left px-4 py-3 hover:bg-dark-200 transition-colors ${
@@ -317,7 +345,10 @@ export default function Sidebar({
             return (
               <li key={item.id}>
                 <button
-                  onClick={() => setCurrentPage(item.id)}
+                  onClick={() => {
+                    setCurrentPage(item.id);
+                    onClose();
+                  }}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
                     isActive
                       ? "bg-gradient-to-r from-accent-purple/20 to-accent-pink/20 text-white border-l-2 border-accent-purple"
@@ -356,6 +387,7 @@ export default function Sidebar({
           FU Work Manager v0.1.0
         </div>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }

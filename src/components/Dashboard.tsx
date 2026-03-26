@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useReportData } from "@/hooks/useReportData";
+import { useIsMobile } from "@/hooks/useIsMobile";
 import {
   LineChart,
   Line,
@@ -132,6 +133,7 @@ export default function Dashboard({
   setSelectedMonth,
   userRole,
 }: DashboardProps) {
+  const isMobile = useIsMobile();
   const storeName = STORES.find((s) => s.id === selectedStore)?.name || "";
   const { data, prevData, loading, error, refetch } = useReportData(
     selectedStore,
@@ -427,7 +429,7 @@ export default function Dashboard({
       <div className="flex items-start justify-between">
         <div>
           <p className="text-gray-400 text-sm">{title}</p>
-          <p className="text-2xl font-bold mt-2">{value}</p>
+          <p className="text-lg sm:text-2xl font-bold mt-2">{value}</p>
           {subValue && <p className="text-sm text-gray-500 mt-1">{subValue}</p>}
         </div>
         <div
@@ -483,7 +485,7 @@ export default function Dashboard({
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold">ダッシュボード</h1>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">ダッシュボード</h1>
             {data && userRole === "admin" && (
               <button
                 onClick={handleDeleteMonth}
@@ -513,12 +515,12 @@ export default function Dashboard({
               </option>
             ))}
           </select>
-          <div className="flex gap-1">
+          <div className="flex flex-wrap gap-1">
             {months.map((month) => (
               <button
                 key={month}
                 onClick={() => setSelectedMonth(month)}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                className={`px-2 sm:px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all ${
                   selectedMonth === month
                     ? "bg-accent-purple text-white"
                     : "text-gray-400 hover:text-white hover:bg-dark-100"
@@ -533,7 +535,7 @@ export default function Dashboard({
 
       {/* No Data State */}
       {!data && (
-        <div className="glass rounded-xl p-12 text-center">
+        <div className="glass rounded-xl p-6 sm:p-8 md:p-12 text-center">
           <Upload className="w-12 h-12 text-gray-500 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-gray-300 mb-2">
             データがありません
@@ -665,7 +667,7 @@ export default function Dashboard({
           {/* Sales Trend */}
           <div className="glass rounded-xl p-6">
             <h3 className="text-lg font-semibold mb-4">売上・純利益推移</h3>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={isMobile ? 200 : 300}>
               <LineChart data={chartSalesData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#333" />
                 <XAxis dataKey="date" stroke="#888" />
@@ -705,7 +707,7 @@ export default function Dashboard({
           {/* Day of Week Analysis */}
           <div className="glass rounded-xl p-6">
             <h3 className="text-lg font-semibold mb-4">曜日別平均売上</h3>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={isMobile ? 200 : 300}>
               <BarChart data={dayOfWeekStats}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#333" />
                 <XAxis dataKey="day" stroke="#888" />
@@ -863,7 +865,7 @@ export default function Dashboard({
 
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
             <div className="lg:col-span-3">
-              <ResponsiveContainer width="100%" height={280}>
+              <ResponsiveContainer width="100%" height={isMobile ? 200 : 280}>
                 <ComposedChart data={hourlyData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#333" />
                   <XAxis dataKey="hour" stroke="#888" fontSize={11} />

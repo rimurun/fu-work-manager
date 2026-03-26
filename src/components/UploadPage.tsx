@@ -148,7 +148,7 @@ export default function UploadPage({
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">データアップロード</h1>
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">データアップロード</h1>
         <p className="text-gray-400 mt-1">
           {storeName} のExcelデータをアップロード
         </p>
@@ -191,7 +191,7 @@ export default function UploadPage({
 
       {/* Upload Area */}
       <div
-        className={`glass rounded-xl p-12 border-2 border-dashed transition-all ${
+        className={`glass rounded-xl p-6 sm:p-8 md:p-12 border-2 border-dashed transition-all ${
           dragActive
             ? "border-accent-purple bg-accent-purple/10"
             : "border-white/20 hover:border-white/40"

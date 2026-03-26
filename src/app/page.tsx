@@ -8,7 +8,7 @@ import UploadPage from "@/components/UploadPage";
 import CastAnalysis from "@/components/CastAnalysis";
 import AccountManagement from "@/components/AccountManagement";
 import { useStores } from "@/hooks/useStores";
-import { Loader2 } from "lucide-react";
+import { Loader2, Menu } from "lucide-react";
 
 type Page = "dashboard" | "upload" | "cast" | "trends" | "accounts";
 
@@ -18,6 +18,7 @@ export default function Home() {
   const [selectedStore, setSelectedStore] = useState<string>("");
   const [selectedYear, setSelectedYear] = useState(2026);
   const [selectedMonth, setSelectedMonth] = useState(1);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const storeManager = useStores();
 
   const userRole = (session?.user as any)?.role as
@@ -115,8 +116,19 @@ export default function Home() {
         userRole={userRole || "store"}
         userName={session?.user?.name || ""}
         onLogout={() => signOut({ callbackUrl: "/login" })}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
       />
-      <main className="flex-1 p-6 overflow-auto">
+      <main className="flex-1 p-3 md:p-6 overflow-auto">
+        <div className="flex items-center gap-3 mb-4 md:hidden">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="p-2 rounded-lg bg-dark-200 hover:bg-dark-100 transition-colors"
+          >
+            <Menu className="w-6 h-6" />
+          </button>
+          <h1 className="text-lg font-bold gradient-text">FU Manager</h1>
+        </div>
         <div className="max-w-7xl mx-auto">{renderPage()}</div>
       </main>
     </div>
